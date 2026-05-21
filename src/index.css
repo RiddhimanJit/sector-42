@@ -1,0 +1,359 @@
+/* Sector-42 Tactical Survival & Operations Command (TSOC) Design System */
+
+:root {
+  /* HSL Tailored Neon Color Palette */
+  --bg-black: #08090b;
+  --bg-darker: #0d0f13;
+  --bg-dark: #14171d;
+  --bg-panel: #1b1f27;
+  --bg-panel-hover: #222832;
+  
+  --color-primary: #ff8800;          /* Tactical Amber */
+  --color-primary-glow: rgba(255, 136, 0, 0.25);
+  --color-primary-dim: #cc6d00;
+  
+  --color-success: #00ff88;          /* Secure Green */
+  --color-success-glow: rgba(0, 255, 136, 0.25);
+  
+  --color-warning: #ffcc00;          /* Hazard Alert Yellow */
+  --color-warning-glow: rgba(255, 204, 0, 0.25);
+  
+  --color-danger: #ff3333;           /* Perimeter Breach Red */
+  --color-danger-glow: rgba(255, 51, 51, 0.3);
+  
+  --color-text-bright: #f0f2f5;
+  --color-text-muted: #8c9ba5;
+  --color-border: #2c3545;
+  --color-border-glow: rgba(255, 136, 0, 0.15);
+  
+  /* Fonts */
+  --font-display: 'Orbitron', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-body: 'Inter', sans-serif;
+
+  /* Animation Speeds */
+  --transition-speed: 0.2s;
+}
+
+/* Global Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-black);
+  color: var(--color-text-bright);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  line-height: 1.5;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-black);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* Scanline / CRT Screen Overlay (Disabled in Low Bandwidth) */
+.crt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  background-size: 100% 4px, 6px 100%;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.crt-vignette {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  box-shadow: inset 0 0 100px rgba(0,0,0,0.6);
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.crt-flicker {
+  animation: crt-flicker 0.15s infinite;
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 136, 0, 0.005);
+  z-index: 9998;
+}
+
+@keyframes crt-flicker {
+  0% { opacity: 0.985; }
+  50% { opacity: 0.999; }
+  100% { opacity: 0.985; }
+}
+
+/* Glassmorphic Cyber Panels */
+.cyber-panel {
+  background: var(--bg-dark);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.cyber-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid var(--color-primary);
+  border-left: 2px solid var(--color-primary);
+}
+
+.cyber-panel::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  border-bottom: 2px solid var(--color-primary);
+  border-right: 2px solid var(--color-primary);
+}
+
+.cyber-panel.primary-glow {
+  border-color: var(--color-primary-dim);
+  box-shadow: 0 0 15px var(--color-primary-glow);
+}
+
+.cyber-panel.danger-glow {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 15px var(--color-danger-glow);
+  animation: danger-pulse 2s infinite ease-in-out;
+}
+
+@keyframes danger-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 51, 51, 0.2); border-color: rgba(255, 51, 51, 0.5); }
+  50% { box-shadow: 0 0 25px rgba(255, 51, 51, 0.6); border-color: rgba(255, 51, 51, 1); }
+}
+
+/* Tactical UI Buttons */
+.cyber-btn {
+  font-family: var(--font-display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: var(--bg-panel);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-bright);
+  padding: 10px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition-speed) ease;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cyber-btn:hover {
+  background: var(--bg-panel-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: 0 0 10px var(--color-primary-glow);
+}
+
+.cyber-btn.active {
+  background: var(--color-primary-dim);
+  border-color: var(--color-primary);
+  color: var(--bg-black);
+  text-shadow: 0 0 2px var(--bg-black);
+  box-shadow: 0 0 12px var(--color-primary-glow);
+}
+
+.cyber-btn.danger {
+  color: var(--color-danger);
+  border-color: rgba(255, 51, 51, 0.4);
+}
+
+.cyber-btn.danger:hover {
+  background: rgba(255, 51, 51, 0.1);
+  border-color: var(--color-danger);
+  box-shadow: 0 0 10px var(--color-danger-glow);
+}
+
+.cyber-btn.danger.active {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--color-text-bright);
+}
+
+.cyber-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-muted) !important;
+  background: var(--bg-dark) !important;
+}
+
+/* Tactical Forms & Inputs */
+.cyber-input, .cyber-select {
+  width: 100%;
+  background: var(--bg-black);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-bright);
+  font-family: var(--font-mono);
+  padding: 10px;
+  border-radius: 4px;
+  outline: none;
+  transition: all var(--transition-speed);
+}
+
+.cyber-input:focus, .cyber-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary-glow);
+}
+
+/* Custom Tactical LED Status Indicators */
+.led-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+}
+
+.led-indicator.green {
+  background-color: var(--color-success);
+  box-shadow: 0 0 8px var(--color-success);
+}
+
+.led-indicator.yellow {
+  background-color: var(--color-warning);
+  box-shadow: 0 0 8px var(--color-warning);
+}
+
+.led-indicator.red {
+  background-color: var(--color-danger);
+  box-shadow: 0 0 8px var(--color-danger);
+  animation: led-flash 1s infinite alternate;
+}
+
+@keyframes led-flash {
+  0% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+/* Scanning Radar Grid Overlay (Visual candy) */
+.radar-grid {
+  position: relative;
+  overflow: hidden;
+  background-image: 
+    radial-gradient(circle, transparent 20%, var(--bg-dark) 20%, var(--bg-dark) 21%, transparent 21%, transparent 40%, var(--bg-dark) 40%, var(--bg-dark) 41%, transparent 41%, transparent 60%, var(--bg-dark) 60%, var(--bg-dark) 61%, transparent 61%, transparent 80%, var(--bg-dark) 80%, var(--bg-dark) 81%, transparent 81%),
+    linear-gradient(rgba(44, 53, 69, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(44, 53, 69, 0.1) 1px, transparent 1px);
+  background-size: 100% 100%, 40px 40px, 40px 40px;
+  background-position: center;
+}
+
+.radar-sweep {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: conic-gradient(from 0deg at 50% 50%, rgba(255, 136, 0, 0.15) 0deg, rgba(255, 136, 0, 0.02) 180deg, transparent 360deg);
+  animation: radar-sweep 6s infinite linear;
+  transform-origin: center;
+  pointer-events: none;
+}
+
+@keyframes radar-sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* LOW-BANDWIDTH & LOW-POWER PROTOCOL */
+.low-bandwidth {
+  --bg-black: #000000;
+  --bg-darker: #000000;
+  --bg-dark: #000000;
+  --bg-panel: #000000;
+  --bg-panel-hover: #111111;
+  --color-border: #ff8800;
+  --color-text-muted: #aaaaaa;
+  
+  font-family: var(--font-mono) !important;
+}
+
+/* Strip animations and heavy rendering assets in low bandwidth */
+.low-bandwidth .crt-overlay,
+.low-bandwidth .crt-vignette,
+.low-bandwidth .crt-flicker,
+.low-bandwidth .radar-sweep,
+.low-bandwidth .cyber-panel::before,
+.low-bandwidth .cyber-panel::after {
+  display: none !important;
+  animation: none !important;
+}
+
+.low-bandwidth .cyber-panel,
+.low-bandwidth .cyber-btn {
+  border-radius: 0px !important;
+  box-shadow: none !important;
+  border: 1px solid var(--color-primary) !important;
+  background: #000000 !important;
+  color: var(--color-primary) !important;
+}
+
+.low-bandwidth .cyber-btn.active {
+  background: var(--color-primary) !important;
+  color: #000000 !important;
+}
+
+.low-bandwidth * {
+  animation: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+
+/* Emergency Alert Red Flashing */
+.emergency-red-flash {
+  animation: emergency-flash 0.8s infinite alternate !important;
+}
+
+@keyframes emergency-flash {
+  0% { background-color: var(--bg-black); }
+  100% { background-color: rgba(255, 51, 51, 0.35); }
+}
+
+/* Morse Screen Flash Overlay */
+.morse-flash-active {
+  background-color: var(--color-primary) !important;
+}
+.morse-flash-active * {
+  color: var(--bg-black) !important;
+}

@@ -1,0 +1,114 @@
+================================================================================
+          SECTOR-42 // TACTICAL SURVIVAL & OPERATIONS COMMAND (TSOC)
+                  STANDARD OPERATIONAL DIRECTIVE // REV. 42
+================================================================================
+
+This document outlines the standard operation protocols for the Sector-42 TSOC 
+Tactical Terminal. Follow these procedures to maintain perimeter integrity, 
+manage colony resource burn rates, and execute local mesh synchronization.
+
+--------------------------------------------------------------------------------
+1. LOCAL HOST INITIATION & SETUP
+--------------------------------------------------------------------------------
+The terminal runs on an offline-ready React + Vite system.
+
+To boot the tactical mainframe:
+  $ bun install            # Install core military-grade dependencies
+  $ bun run dev            # Boot local server (Default Port: 3000)
+  $ bun run build          # Compile static distribution bundle
+
+Access URL: http://localhost:3000/
+
+--------------------------------------------------------------------------------
+2. DEFENSE RADAR PROTOCOL
+--------------------------------------------------------------------------------
+* Location: Console -> [DEFENSE RADAR] Tab
+* Interface: Interactive SVG Tactical Map of Sector-42.
+* Operation:
+  - Pulse colors indicate active threat levels:
+      * Toxic Green = SECURE (Normal operations)
+      * Neon Yellow = ALERT (Suspected perimeter movements)
+      * Flashing Red = BREACH (Critical intrusion - Global alarms active)
+  - Click any sector node (e.g. Gate Alpha, Crop Farms, Med Bay) to:
+      * Set manual warning statuses.
+      * View historical sector-specific logs.
+      * Assign sentinels (Using the Guardian Slider).
+  - Note: Each active posted sentinel increases daily food burn rate by +0.2 cans.
+
+--------------------------------------------------------------------------------
+3. RESERVES INDEX & BURN RATE MANAGEMENT
+--------------------------------------------------------------------------------
+* Location: Console -> [RESERVES INDEX] Tab
+* Operation:
+  - Track reserves of Food Rations, Fresh Water, Ammo, Medicine, and Diesel Fuel.
+  - Adjust colony population using the survivor index slider.
+  - Depletion forecasting adapts dynamically to active headcount and sentinel posts.
+  - Shortage Warnings: If reserves for any critical cache drop below 7 days, a 
+    CRITICAL RESOURCE ALERT warning banner will activate. Reduce population intake 
+    or dispatch scavenging expeditions immediately.
+
+--------------------------------------------------------------------------------
+4. SQUAD EXPEDITIONS DISPATCH
+--------------------------------------------------------------------------------
+* Location: Console -> [EXPEDITIONS] Tab
+* Operation:
+  - Dispatch scavenging fireteams to target POIs (e.g., Police Precinct, MegaMart).
+  - Risk scores are calculated in real-time based on target distance, time of day 
+    (nightfall adds +30 danger penalty), squad headcount, ammo loadouts, and medkits.
+  - After dispatching: Live comm links report tactical radio logs every 4 seconds.
+  - Mission Success: Upon fireteam return, salvaged resources are deposited 
+    directly into your reserve cache automatically.
+
+--------------------------------------------------------------------------------
+5. SHORTWAVE MHZ FREQUENCY DECODER
+--------------------------------------------------------------------------------
+* Location: Console -> [FIELD TELEGRAPHY] Tab
+* Operation:
+  - **Morse Encoder**: Input any text string and trigger visual flash signaling or 
+    synthesized 750 Hz audio tones.
+  - **Tactile Key**: Click or tap the manual key to translate Morse code in real-time. 
+    (Short tap = Dot, Hold tap = Dash).
+  - **MHZ dial**: Adjust the slider to decode live regional shortwave bands:
+      * 142.10 MHz = Commander HQ Secure channel
+      * 145.80 MHz = Regional Survivalist Mesh channel
+      * 148.50 MHz = Emergency distress signals
+
+--------------------------------------------------------------------------------
+6. BATTERY CONSERVATION MODE (LOW POWER)
+--------------------------------------------------------------------------------
+* Location: Top Bar -> [LOW POWER] Button
+* Operation:
+  - In extreme scenarios (solar flare activity, battery drain, offline status):
+    Toggle LOW POWER mode.
+  - Instantly strips high-resource CRT scanline overlays, pulse glows, scan sweeps,
+    and visual animations.
+  - Switches standard styles to a monochrome, high-contrast monochrome system to
+    maximize screen readability on rugged hardware.
+
+--------------------------------------------------------------------------------
+7. LOCAL MESH SYNCHRONIZATION
+--------------------------------------------------------------------------------
+* Location: Console -> [MESH OFFLINE SYNC] Tab
+* Operation:
+  - To sync data with external survivor groups without a network:
+  - **Export**: Copy the automatically generated telemetry JSON string. Transmit
+    this string over shortwave packet radio.
+  - **Import**: Paste incoming JSON packets into the telemetry decoder input buffer. 
+    The terminal parses and validates the schema, restoring external status parameters 
+    safely.
+
+  Telemetry Schema Example:
+  {
+    "population": 42,
+    "inventory": [
+      { "key": "food", "quantity": 180 },
+      { "key": "water", "quantity": 450 }
+    ],
+    "sectors": [
+      { "id": "gate-a", "status": "secure", "guards": 2 }
+    ]
+  }
+
+================================================================================
+                 DOCUMENT RECORD CLOSED // NO FURTHER DATA FILE
+================================================================================
