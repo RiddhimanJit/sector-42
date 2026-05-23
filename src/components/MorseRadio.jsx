@@ -33,6 +33,18 @@ export default function MorseRadio({ triggerUINotification }) {
   const keyPressTime = useRef(0)
   const gapTimer = useRef(null)
 
+  // Type Decoder States
+  const [decoderMode, setDecoderMode] = useState('tap') // 'tap' or 'type'
+  const [typedMorse, setTypedMorse] = useState('')
+
+  const getDecodedTypedMorse = () => {
+    if (!typedMorse) return ''
+    return typedMorse.split(' ').map(code => {
+      if (code === '') return ''
+      return REVERSE_MORSE[code] || '?'
+    }).join('')
+  }
+
   // Frequency Tuner States
   const [frequency, setFrequency] = useState(144.50)
   const [radioSignal, setRadioSignal] = useState(null)
@@ -230,6 +242,7 @@ export default function MorseRadio({ triggerUINotification }) {
   const handleResetTap = () => {
     setTapMorse('')
     setDecodedText('')
+    setTypedMorse('')
   }
 
   return (
@@ -312,50 +325,79 @@ export default function MorseRadio({ triggerUINotification }) {
         {/* TACTILE TAP TELEGRAPH KEY */}
         <div className="cyber-panel primary-glow" style={{ padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
-            <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
-              <HelpCircle style={{ width: '18px', height: '18px' }} />
-              MANUAL TACTILE DECODER
-            </h3>
-
-            {/* Tap Panel */}
-            <div 
-              onMouseDown={handleTapStart}
-              onMouseUp={handleTapEnd}
-              onMouseLeave={handleTapEnd}
-              onTouchStart={handleTapStart}
-              onTouchEnd={handleTapEnd}
-              style={{
-                width: '100%',
-                height: '100px',
-                background: isKeyDown ? 'var(--color-primary-glow)' : 'var(--bg-black)',
-                border: '2px dashed var(--color-primary)',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                flexDirection: 'column',
-                userSelect: 'none',
-                transition: 'background-color 0.1s'
-              }}
-            >
-              <span style={{ fontSize: '13px', fontWeight: 'bold', fontFamily: 'var(--font-display)', color: 'var(--color-primary)' }}>
-                {isKeyDown ? 'TRANSMITTING...' : 'TAP TELEGRAPH KEY'}
-              </span>
-              <span style={{ fontSize: '9px', color: 'var(--color-text-muted)', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
-                SHORT CLICK = DOT (.) | HOLD CLICK = DASH (-)
-              </span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <HelpCircle style={{ width: '18px', height: '18px' }} />
+                MANUAL DECODER
+              </h3>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <button 
+                  className={`cyber-btn ${decoderMode === 'tap' ? 'active' : ''}`} 
+                  onClick={() => setDecoderMode('tap')}
+                  style={{ padding: '4px 8px', fontSize: '10px' }}
+                >TAP</button>
+                <button 
+                  className={`cyber-btn ${decoderMode === 'type' ? 'active' : ''}`} 
+                  onClick={() => setDecoderMode('type')}
+                  style={{ padding: '4px 8px', fontSize: '10px' }}
+                >TYPE</button>
+              </div>
             </div>
+
+            {/* Input Panel */}
+            {decoderMode === 'tap' ? (
+              <div 
+                onMouseDown={handleTapStart}
+                onMouseUp={handleTapEnd}
+                onMouseLeave={handleTapEnd}
+                onTouchStart={handleTapStart}
+                onTouchEnd={handleTapEnd}
+                style={{
+                  width: '100%',
+                  height: '100px',
+                  background: isKeyDown ? 'var(--color-primary-glow)' : 'var(--bg-black)',
+                  border: '2px dashed var(--color-primary)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexDirection: 'column',
+                  userSelect: 'none',
+                  transition: 'background-color 0.1s'
+                }}
+              >
+                <span style={{ fontSize: '13px', fontWeight: 'bold', fontFamily: 'var(--font-display)', color: 'var(--color-primary)' }}>
+                  {isKeyDown ? 'TRANSMITTING...' : 'TAP TELEGRAPH KEY'}
+                </span>
+                <span style={{ fontSize: '9px', color: 'var(--color-text-muted)', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
+                  SHORT CLICK = DOT (.) | HOLD CLICK = DASH (-)
+                </span>
+              </div>
+            ) : (
+              <input 
+                type="text" 
+                className="cyber-input" 
+                value={typedMorse}
+                onChange={(e) => setTypedMorse(e.target.value.replace(/[^.\- /]/g, ''))}
+                placeholder="Type morse (. - /)"
+                style={{ width: '100%', height: '100px', fontSize: '24px', textAlign: 'center', letterSpacing: '4px', background: 'var(--bg-black)', border: '2px dashed var(--color-primary)' }}
+              />
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px' }}>
               <div style={{ background: 'var(--bg-black)', padding: '8px', borderRadius: '4px', border: '1px solid var(--color-border)', minHeight: '40px' }}>
                 <span style={{ fontSize: '9px', color: 'var(--color-text-muted)', display: 'block', fontFamily: 'var(--font-mono)' }}>CURRENT SYMBOL</span>
-                <span style={{ fontSize: '16px', fontFamily: 'var(--font-mono)', color: 'var(--color-primary)', fontWeight: 'bold' }}>{tapMorse || '...'}</span>
+                <span style={{ fontSize: '16px', fontFamily: 'var(--font-mono)', color: 'var(--color-primary)', fontWeight: 'bold' }}>
+                  {decoderMode === 'tap' ? (tapMorse || '...') : 'N/A'}
+                </span>
               </div>
 
               <div style={{ background: 'var(--bg-black)', padding: '8px', borderRadius: '4px', border: '1px solid var(--color-border)', minHeight: '40px' }}>
                 <span style={{ fontSize: '9px', color: 'var(--color-text-muted)', display: 'block', fontFamily: 'var(--font-mono)' }}>DECODED CHARACTERS</span>
-                <span style={{ fontSize: '16px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-bright)', fontWeight: 'bold' }}>{decodedText || '[AWAITING]'}</span>
+                <span style={{ fontSize: '16px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-bright)', fontWeight: 'bold' }}>
+                  {decoderMode === 'tap' ? (decodedText || '[AWAITING]') : (getDecodedTypedMorse() || '[AWAITING]')}
+                </span>
               </div>
             </div>
           </div>
