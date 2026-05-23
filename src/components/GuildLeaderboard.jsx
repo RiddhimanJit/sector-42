@@ -5,7 +5,7 @@ import { Trophy, Users, Star, Target, Crown, Award, Activity } from 'lucide-reac
 const INITIAL_FACTIONS = [
   { id: 'f-1', name: 'Iron Wolves', members: 42, score: 8520, status: 'Hostile', color: '239, 68, 68' },
   { id: 'f-2', name: 'Neon Vanguard', members: 128, score: 7100, status: 'Neutral', color: '59, 130, 246' },
-  { id: 'f-3', name: 'Sector-42 (You)', members: 42, score: 2500, status: 'Friendly', color: '34, 197, 94' },
+  { id: 'f-3', name: 'Bronze Barrons (You)', members: 42, score: 2500, status: 'Friendly', color: '34, 197, 94' },
   { id: 'f-4', name: 'Scrap Barons', members: 15, score: 1950, status: 'Hostile', color: '245, 158, 11' },
   { id: 'f-5', name: 'Dust Walkers', members: 8, score: 1200, status: 'Neutral', color: '168, 85, 247' },
 ]
@@ -54,7 +54,7 @@ export default function GuildLeaderboard({ inventory, adjustInventory, triggerUI
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-      
+
       {/* LOCAL FACTION DASHBOARD */}
       <div className="cyber-panel primary-glow" style={{ padding: '16px' }}>
         <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
@@ -63,7 +63,7 @@ export default function GuildLeaderboard({ inventory, adjustInventory, triggerUI
         </h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-          
+
           <div style={{ background: 'var(--bg-black)', border: '1px solid var(--color-border)', borderRadius: '4px', padding: '12px' }}>
             <div style={{ color: 'var(--color-text-muted)', fontSize: '10px', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>CURRENT STANDING</div>
             <div style={{ fontSize: '20px', fontFamily: 'var(--font-display)', color: 'var(--color-success)', fontWeight: 'bold' }}>
@@ -92,18 +92,18 @@ export default function GuildLeaderboard({ inventory, adjustInventory, triggerUI
           <div style={{ color: 'var(--color-text-muted)', fontSize: '11px', fontFamily: 'var(--font-mono)', marginBottom: '12px' }}>
             CONTRIBUTE SURVIVAL RESOURCES TO BOOST FACTION STANDING:
           </div>
-          
+
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <input 
-              type="number" 
-              className="cyber-input" 
-              value={contributionAmount} 
+            <input
+              type="number"
+              className="cyber-input"
+              value={contributionAmount}
               onChange={(e) => setContributionAmount(Math.max(1, parseInt(e.target.value) || 1))}
-              style={{ width: '80px', padding: '6px', fontSize: '12px', textAlign: 'center' }} 
+              style={{ width: '80px', padding: '6px', fontSize: '12px', textAlign: 'center' }}
             />
-            
+
             {inventory.map(item => (
-              <button 
+              <button
                 key={item.key}
                 className="cyber-btn"
                 onClick={() => handleContribute(item.key)}
@@ -122,11 +122,11 @@ export default function GuildLeaderboard({ inventory, adjustInventory, triggerUI
       <div className="cyber-panel primary-glow" style={{ padding: '16px' }}>
         <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <Trophy style={{ width: '18px', height: '18px' }} />
-          GLOBAL SYNDICATE LEADERBOARD
+          SECTOR-42 SYNDICATE LEADERBOARD
         </h3>
 
         <div style={{ background: 'var(--bg-darker)', border: '1px solid #1f2533', borderRadius: '4px', overflow: 'hidden' }}>
-          
+
           {/* Header */}
           <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 100px 120px 100px', gap: '10px', padding: '10px 12px', background: 'var(--bg-black)', borderBottom: '1px solid var(--color-border)', fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
             <div>Rank</div>
@@ -141,14 +141,14 @@ export default function GuildLeaderboard({ inventory, adjustInventory, triggerUI
             {sortedFactions.map((faction, index) => {
               const isLocal = faction.id === 'f-3'
               return (
-                <div 
-                  key={faction.id} 
-                  style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '60px 1fr 100px 120px 100px', 
-                    gap: '10px', 
-                    padding: '12px', 
-                    borderBottom: '1px solid #1f2533', 
+                <div
+                  key={faction.id}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '60px 1fr 100px 120px 100px',
+                    gap: '10px',
+                    padding: '12px',
+                    borderBottom: '1px solid #1f2533',
                     alignItems: 'center',
                     background: isLocal ? 'rgba(34, 197, 94, 0.05)' : 'transparent',
                     fontFamily: 'var(--font-mono)',
@@ -167,9 +167,9 @@ export default function GuildLeaderboard({ inventory, adjustInventory, triggerUI
                     {isLocal ? population : faction.members}
                   </div>
                   <div>
-                    <span style={{ 
-                      padding: '2px 6px', 
-                      borderRadius: '2px', 
+                    <span style={{
+                      padding: '2px 6px',
+                      borderRadius: '2px',
                       fontSize: '9px',
                       background: `rgba(${faction.color}, 0.1)`,
                       color: `rgb(${faction.color})`,
