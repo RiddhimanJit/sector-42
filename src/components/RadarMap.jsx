@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
-import { Shield, AlertTriangle, ShieldAlert, ShieldCheck, UserPlus, Users, PlusCircle, History } from 'lucide-react'
+import { Shield, AlertTriangle, ShieldAlert, ShieldCheck, UserPlus, Users, PlusCircle, History, Radar, X } from 'lucide-react'
+import RadarCanvas from './RadarCanvas'
 
 export default function RadarMap({ sectors, updateSector, addLog, lowBandwidth }) {
   const [selectedSectorId, setSelectedSectorId] = useState('gate-a')
   const [newLogText, setNewLogText] = useState('')
   const [logOperator, setLogOperator] = useState('Sentinel-1')
+  const [radarOpen, setRadarOpen] = useState(false)
 
   const selectedSector = sectors.find(s => s.id === selectedSectorId) || sectors[0]
 
@@ -49,6 +51,56 @@ export default function RadarMap({ sectors, updateSector, addLog, lowBandwidth }
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+
+      {/* RADAR LAUNCH BUTTON */}
+      <button
+        className="cyber-btn"
+        onClick={() => setRadarOpen(true)}
+        style={{
+          width: '100%',
+          padding: '14px 20px',
+          justifyContent: 'center',
+          gap: '10px',
+          fontSize: '13px',
+          color: '#22c55e',
+          borderColor: 'rgba(34,197,94,.35)',
+          background: 'rgba(34,197,94,.06)',
+          letterSpacing: '0.15em',
+        }}
+      >
+        <Radar style={{ width: '18px', height: '18px' }} />
+        OPEN LONG-RANGE THREAT RADAR
+        <span style={{ fontSize: '9px', opacity: 0.5, marginLeft: '4px' }}>📡 5.0 KM</span>
+      </button>
+
+      {/* FULLSCREEN RADAR OVERLAY */}
+      {radarOpen && (
+        <div className="radar-overlay" onClick={() => setRadarOpen(false)}>
+          <div className="radar-overlay-scanlines" />
+          <div className="radar-overlay-content" onClick={e => e.stopPropagation()}>
+            <div className="radar-overlay-header">
+              <h2 className="radar-overlay-title">
+                📡 LONG-RANGE THREAT RADAR — SECTOR-42
+              </h2>
+              <button
+                className="cyber-btn"
+                onClick={() => setRadarOpen(false)}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: '11px',
+                  color: '#ef4444',
+                  borderColor: 'rgba(239,68,68,.4)',
+                }}
+              >
+                <X style={{ width: '14px', height: '14px' }} />
+                CLOSE RADAR
+              </button>
+            </div>
+            <RadarCanvas lowBandwidth={lowBandwidth} />
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
         
         {/* INTERACTIVE RADAR SVG PANEL */}

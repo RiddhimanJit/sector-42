@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { 
   Shield, 
   Flame, 
@@ -23,6 +23,7 @@ import ExpeditionPlanner from './components/ExpeditionPlanner'
 import MorseRadio from './components/MorseRadio'
 import Manual from './components/Manual'
 import MeshSync from './components/MeshSync'
+import BootScreen from './components/BootScreen'
 
 const DEFAULT_SECTORS = [
   { id: 'wt-1', name: 'Watchtower NW', status: 'secure', guards: 1, logs: [{ timestamp: '18:10', operator: 'Sentinel-1', message: 'Perimeter check complete. Visual range clear.' }] },
@@ -45,6 +46,7 @@ const DEFAULT_INVENTORY = [
 ]
 
 export default function App() {
+  const [booted, setBooted] = useState(false)
   const [activeTab, setActiveTab] = useState('radar')
   const [population, setPopulation] = useState(42)
   const [inventory, setInventory] = useState(DEFAULT_INVENTORY)
@@ -56,6 +58,10 @@ export default function App() {
   const [soundVolume, setSoundVolume] = useState(0.5) // 0 to 1
   const [notifications, setNotifications] = useState([])
   const [globalStatus, setGlobalStatus] = useState('secure') // secure, alert, breached
+
+  const handleBootComplete = useCallback(() => {
+    setBooted(true)
+  }, [])
 
   // Trigger brief military notification ticker in top right
   const triggerUINotification = (text) => {
@@ -218,6 +224,10 @@ export default function App() {
     if (lowPowerMode) classes += ' low-bandwidth'
     if (globalStatus === 'breached') classes += ' emergency-red-flash'
     return classes
+  }
+
+  if (!booted) {
+    return <BootScreen onComplete={handleBootComplete} />
   }
 
   return (
