@@ -5,6 +5,10 @@ const BLIPS = [
   { x:  .32, y:  .38, color: '245,158,11', label: 'H2',    km: 4.1 },
   { x:  .12, y: -.28, color: '59,130,246', label: 'SCOUT', km: null },
   { x: -.2,  y:  .15, color: '34,197,94',  label: 'CACHE', km: null },
+  { x:  .65, y: -.50, color: '239,68,68',  label: 'WOLVES', km: 8.2 },
+  { x: -.55, y:  .60, color: '59,130,246', label: 'VANGUARD', km: 6.4 },
+  { x:  .70, y:  .45, color: '245,158,11', label: 'BARONS', km: 9.1 },
+  { x: -.40, y: -.65, color: '168,85,247', label: 'DUST', km: 7.8 },
 ]
 
 export default function RadarCanvas({ lowBandwidth }) {
@@ -214,9 +218,9 @@ export default function RadarCanvas({ lowBandwidth }) {
       </div>
 
       <div className="radar-canvas-readout">
-        RANGE <span>5.0 KM</span> &nbsp;·&nbsp;
+        RANGE <span>10.0 KM</span> &nbsp;·&nbsp;
         SWEEP <span>0.21 Hz</span> &nbsp;·&nbsp;
-        CONTACTS <span ref={contactCountRef}>4</span>
+        CONTACTS <span ref={contactCountRef}>8</span>
         <br />
         HORDE ALPHA <span ref={h1DistRef}>2.3 KM</span> &nbsp;·&nbsp;
         HORDE BETA <span ref={h2DistRef}>4.1 KM</span>
@@ -238,6 +242,10 @@ export default function RadarCanvas({ lowBandwidth }) {
         <div className="radar-leg-row">
           <div className="radar-leg-dot" style={{ background: '#22c55e' }} />
           SUPPLY CACHE
+        </div>
+        <div className="radar-leg-row" style={{ marginTop: '8px', color: 'var(--color-primary)' }}>
+          <div className="radar-leg-dot" style={{ background: 'var(--color-primary)' }} />
+          FACTION SIGNALS DETECTED
         </div>
       </div>
     </div>

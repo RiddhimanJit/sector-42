@@ -1,4 +1,4 @@
-import { Shield, Flame, Compass, Radio, BookOpen, Share2 } from 'lucide-react'
+import { Shield, Flame, Compass, Radio, BookOpen, Share2, Trophy } from 'lucide-react'
 
 // Import components
 import RadarMap from './components/RadarMap'
@@ -7,6 +7,7 @@ import ExpeditionPlanner from './components/ExpeditionPlanner'
 import MorseRadio from './components/MorseRadio'
 import Manual from './components/Manual'
 import MeshSync from './components/MeshSync'
+import GuildLeaderboard from './components/GuildLeaderboard'
 
 export const plugins = [
   {
@@ -32,6 +33,12 @@ export const plugins = [
     name: 'FIELD TELEGRAPHY',
     icon: Radio,
     component: MorseRadio
+  },
+  {
+    id: 'guilds',
+    name: 'FACTION NETWORK',
+    icon: Trophy,
+    component: GuildLeaderboard
   },
   {
     id: 'manual',
