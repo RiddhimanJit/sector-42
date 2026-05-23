@@ -14,6 +14,7 @@ import BootScreen from './components/BootScreen'
 import SignUp from './components/SignUp'
 import { plugins } from './plugins'
 import { subscribeToAuthChanges, syncUserData, isConfigured, seedFactionsIfEmpty, logoutUser, syncFactionData, subscribeToFactionData } from './services/firebase'
+import { playMorseSequence } from './utils/morsePlayer'
 
 const DEFAULT_SECTORS = [
   { id: 'wt-1', name: 'Watchtower NW', status: 'secure', guards: 1, logs: [{ timestamp: '18:10', operator: 'Sentinel-1', message: 'Perimeter check complete. Visual range clear.' }] },
@@ -45,6 +46,9 @@ export default function App() {
   const [sectors, setSectors] = useState(DEFAULT_SECTORS)
   const [expeditions, setExpeditions] = useState([])
   const [broadcasts, setBroadcasts] = useState([])
+  
+  const [globalFlashActive, setGlobalFlashActive] = useState(false)
+  const lastProcessedBroadcast = useRef(null)
   
   // Terminal Customization states
   const [lowPowerMode, setLowPowerMode] = useState(false)
@@ -102,6 +106,29 @@ export default function App() {
     });
     return () => unsubscribe();
   }, [currentUser?.factionId]);
+
+  // Watch for incoming morse broadcasts to play globally
+  useEffect(() => {
+    if (broadcasts.length > 0) {
+      const latest = broadcasts[0]
+      const broadcastId = latest.timestamp + latest.operator + latest.message;
+      
+      // If we haven't processed this exact broadcast
+      if (lastProcessedBroadcast.current !== broadcastId) {
+        lastProcessedBroadcast.current = broadcastId;
+        
+        // Don't auto-play our own broadcasts (MorseRadio handles local playback)
+        if (currentUser && latest.operator !== currentUser.username) {
+          // Extract morse from "[TEXT] .- .- .-"
+          const morseMatch = latest.message.match(/\] (.*)$/)
+          if (morseMatch) {
+            triggerUINotification(`INCOMING TRANSMISSION FROM ${latest.operator}`);
+            playMorseSequence(morseMatch[1], soundVolume > 0, setGlobalFlashActive, null);
+          }
+        }
+      }
+    }
+  }, [broadcasts, currentUser, soundVolume])
 
   // Trigger brief military notification ticker in top right
   const triggerUINotification = (text) => {
@@ -546,6 +573,11 @@ export default function App() {
 
         </section>
       </main>
+
+      {/* GLOBAL MORSE FLASH OVERLAY */}
+      {globalFlashActive && (
+        <div className="morse-flash-active" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 10002, pointerEvents: 'none', transition: 'background-color 0.05s', backgroundColor: 'rgba(255, 255, 255, 0.8)' }} />
+      )}
 
       {/* FOOTER TICKER BANNER TACTICAL NOTIFICATIONS */}
       <footer className="cyber-panel primary-glow" style={{ margin: '0 16px 16px 16px', padding: '10px 16px', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
