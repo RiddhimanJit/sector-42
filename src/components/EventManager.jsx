@@ -200,7 +200,7 @@ export default function EventManager({
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <AlertTriangle style={{ width: '20px', height: '20px' }} />
         <span style={{ fontSize: '16px', letterSpacing: '0.05em' }}>
-          ACTIVE CRISIS PROTOCOL: {activeEvent.type.replace('_', ' ').toUpperCase()}
+          ACTIVE CRISIS PROTOCOL: {activeEvent?.type?.replace('_', ' ')?.toUpperCase() || 'UNKNOWN'}
         </span>
       </div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>

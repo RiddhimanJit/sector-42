@@ -559,14 +559,14 @@ export default function App() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
               <span>Water Levels:</span>
-              <span style={{ color: inventory.find(i => i.key === 'water').quantity < 200 ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 'bold' }}>
-                {inventory.find(i => i.key === 'water').quantity} L
+              <span style={{ color: (inventory.find(i => i.key === 'water')?.quantity || 0) < 200 ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 'bold' }}>
+                {inventory.find(i => i.key === 'water')?.quantity || 0} L
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Food Reserves:</span>
-              <span style={{ color: inventory.find(i => i.key === 'food').quantity < 60 ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 'bold' }}>
-                {inventory.find(i => i.key === 'food').quantity} cans
+              <span style={{ color: (inventory.find(i => i.key === 'food')?.quantity || 0) < 60 ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 'bold' }}>
+                {inventory.find(i => i.key === 'food')?.quantity || 0} cans
               </span>
             </div>
           </div>

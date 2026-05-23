@@ -95,7 +95,7 @@ export default function GuildRaids({
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '6px', fontFamily: 'var(--font-mono)', display: 'flex', justifyContent: 'space-between' }}>
+            <label style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '6px', fontFamily: 'var(--font-mono)', display: 'flex', justifyContent: 'space-between' }}>
               <span>STRIKE TEAM SIZE</span>
               <span style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>{raidersCount} OPERATOR(S)</span>
             </label>

@@ -8,7 +8,7 @@ export default function RadarMap({ sectors, updateSector, addLog, lowBandwidth, 
   const [logOperator, setLogOperator] = useState('Sentinel-1')
   const [radarOpen, setRadarOpen] = useState(false)
 
-  const selectedSector = sectors.find(s => s.id === selectedSectorId) || sectors[0]
+  const selectedSector = sectors?.find(s => s.id === selectedSectorId) || sectors?.[0] || { id: 'unknown', name: 'Unknown', status: 'secure', description: '', guards: 0, coords: [0,0] }
 
   const handleStatusChange = (status) => {
     updateSector(selectedSectorId, { status })
