@@ -23,22 +23,22 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
     if (!loc) return 0
 
     let score = loc.baseRisk
-    
+
     // Distance factor (+5 per km)
     score += Math.floor(loc.dist * 5)
-    
+
     // Time of Day factor (+30 for night)
     if (timeOfDay === 'night') score += 30
-    
+
     // Squad size defense modifier
     if (squadSize === 1) score += 25
     if (squadSize === 2) score += 12
     if (squadSize >= 5) score -= 10
-    
+
     // Equipment dampeners
     score -= Math.floor(ammoAssigned / 5) // more ammo decreases risk (max ammo 100)
     score -= medsAssigned * 8            // more meds decrease risk
-    
+
     return Math.max(5, Math.min(100, score))
   }
 
@@ -85,10 +85,10 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
           if (exp.dispatcherId !== (currentUser?.uid || 'offline-op')) return exp // Only the dispatcher ticks the progress
 
           updatedNeeded = true
-          
+
           const nextProgress = Math.min(100, exp.progress + 5)
           const ticksLeft = Math.max(0, exp.timer - 1)
-          
+
           let nextStatus = exp.status
           let newLog = null
 
@@ -108,7 +108,7 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
           } else if (nextProgress === 100) {
             nextStatus = 'completed'
             newLog = `[00:20] Command: Arrival confirmed! Squad returned safely. Rations and gear deposited.`
-            
+
             // Calculate final loot yield
             let yieldQty = 0
             if (exp.lootType === 'food') yieldQty = Math.floor(Math.random() * 60) + 30
@@ -116,7 +116,7 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
             else if (exp.lootType === 'medicine') yieldQty = Math.floor(Math.random() * 10) + 4
             else if (exp.lootType === 'ammo') yieldQty = Math.floor(Math.random() * 80) + 40
             else if (exp.lootType === 'fuel') yieldQty = Math.floor(Math.random() * 50) + 20
-            
+
             // Calculate scraps yield based on difficulty (5 - 100)
             // Higher riskScore = higher potential yield
             const riskMultiplier = Math.max(0.1, exp.riskScore / 100)
@@ -150,9 +150,9 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-      
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-        
+
         {/* EXPEDITION FORM */}
         <div className="cyber-panel primary-glow" style={{ padding: '16px' }}>
           <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
@@ -161,14 +161,14 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            
+
             {/* Target Select */}
             <div>
               <label style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px', fontFamily: 'var(--font-mono)' }}>
                 1. SELECT SCAN TARGET AREA
               </label>
-              <select 
-                className="cyber-select" 
+              <select
+                className="cyber-select"
                 value={targetPOI}
                 onChange={(e) => setTargetPOI(e.target.value)}
               >
@@ -189,7 +189,7 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
                 <label style={{ fontSize: '11px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px', fontFamily: 'var(--font-mono)' }}>
                   2. SQUAD SIZE
                 </label>
-                <select 
+                <select
                   className="cyber-select"
                   value={squadSize}
                   onChange={(e) => setSquadSize(parseInt(e.target.value) || 1)}
@@ -207,16 +207,16 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
                   3. TIMING PROTOCOL
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className={`cyber-btn ${timeOfDay === 'day' ? 'active' : ''}`}
                     onClick={() => setTimeOfDay('day')}
                     style={{ padding: '6px', fontSize: '10px', justifyContent: 'center' }}
                   >
                     DAY LIGHT
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className={`cyber-btn ${timeOfDay === 'night' ? 'active' : ''}`}
                     onClick={() => setTimeOfDay('night')}
                     style={{ padding: '6px', fontSize: '10px', justifyContent: 'center' }}
@@ -233,7 +233,7 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
                 <label style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px', fontFamily: 'var(--font-mono)' }}>
                   PROVISION AMMUNITION
                 </label>
-                <select 
+                <select
                   className="cyber-select"
                   value={ammoAssigned}
                   onChange={(e) => setAmmoAssigned(parseInt(e.target.value) || 0)}
@@ -251,7 +251,7 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
                 <label style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px', fontFamily: 'var(--font-mono)' }}>
                   PROVISION MED-KITS
                 </label>
-                <select 
+                <select
                   className="cyber-select"
                   value={medsAssigned}
                   onChange={(e) => setMedsAssigned(parseInt(e.target.value) || 0)}
@@ -265,9 +265,9 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
               </div>
             </div>
 
-            <button 
-              className="cyber-btn" 
-              onClick={handleLaunch} 
+            <button
+              className="cyber-btn"
+              onClick={handleLaunch}
               style={{ width: '100%', padding: '12px', justifyContent: 'center', marginTop: '4px' }}
             >
               <Compass style={{ width: '16px', height: '16px' }} />
@@ -343,19 +343,19 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
             </div>
           ) : (
             expeditions.map((exp) => (
-              <div 
-                key={exp.id} 
-                style={{ 
-                  background: 'var(--bg-black)', 
-                  border: '1px solid var(--color-border)', 
-                  borderRadius: '4px', 
+              <div
+                key={exp.id}
+                style={{
+                  background: 'var(--bg-black)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '4px',
                   padding: '12px',
                   display: 'grid',
                   gridTemplateColumns: '200px 1fr',
                   gap: '20px'
                 }}
               >
-                
+
                 {/* Status Column */}
                 <div>
                   <div style={{ fontWeight: 'bold', fontSize: '12px', fontFamily: 'var(--font-display)', color: 'var(--color-primary)' }}>
@@ -373,10 +373,10 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
                       <span>{exp.progress}%</span>
                     </div>
                     <div style={{ width: '100%', height: '6px', background: 'var(--bg-panel)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div 
-                        style={{ 
-                          width: `${exp.progress}%`, 
-                          height: '100%', 
+                      <div
+                        style={{
+                          width: `${exp.progress}%`,
+                          height: '100%',
                           background: exp.status === 'completed' ? 'var(--color-success)' : 'var(--color-primary)',
                           transition: 'width 0.2s'
                         }}
