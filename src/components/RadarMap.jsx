@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
-import { Shield, AlertTriangle, ShieldAlert, ShieldCheck, UserPlus, Users, PlusCircle, History, Radar, X } from 'lucide-react'
+import { Shield, AlertTriangle, ShieldAlert, ShieldCheck, UserPlus, Users, PlusCircle, History, Radar, X, Wrench } from 'lucide-react'
 import RadarCanvas from './RadarCanvas'
 
-export default function RadarMap({ sectors, updateSector, addLog, lowBandwidth }) {
+export default function RadarMap({ sectors, updateSector, addLog, lowBandwidth, inventory, adjustInventory, triggerUINotification }) {
   const [selectedSectorId, setSelectedSectorId] = useState('gate-a')
   const [newLogText, setNewLogText] = useState('')
   const [logOperator, setLogOperator] = useState('Sentinel-1')
   const [radarOpen, setRadarOpen] = useState(false)
 
-  const selectedSector = sectors.find(s => s.id === selectedSectorId) || sectors[0]
+  const selectedSector = sectors?.find(s => s.id === selectedSectorId) || sectors?.[0] || { id: 'unknown', name: 'Unknown', status: 'secure', description: '', guards: 0, coords: [0,0] }
 
   const handleStatusChange = (status) => {
     updateSector(selectedSectorId, { status })
@@ -259,6 +259,41 @@ export default function RadarMap({ sectors, updateSector, addLog, lowBandwidth }
                 </button>
               </div>
             </div>
+
+            {/* REPAIR DAMAGES BUTTON (Only visible if damaged/breached) */}
+            {(selectedSector.status === 'damaged' || selectedSector.status === 'breached') && inventory && (
+              <div style={{ marginBottom: '16px', background: 'var(--color-danger)', color: 'var(--bg-black)', padding: '12px', borderRadius: '4px', border: '1px solid var(--color-danger)' }}>
+                <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <AlertTriangle size={16} />
+                  CRITICAL: SECTOR REPAIRS REQUIRED
+                </div>
+                <div style={{ fontSize: '11px', marginBottom: '8px', fontFamily: 'var(--font-mono)' }}>
+                  Restoring structural integrity requires: 10 Scraps, 5 Ammo, 2 Water.
+                </div>
+                <button 
+                  className="cyber-btn"
+                  style={{ width: '100%', padding: '8px', background: 'var(--bg-black)', color: 'var(--color-danger)', borderColor: 'var(--bg-black)', fontWeight: 'bold', justifyContent: 'center' }}
+                  onClick={() => {
+                    const scraps = inventory.find(i => i.key === 'scraps')?.quantity || 0;
+                    const ammo = inventory.find(i => i.key === 'ammo')?.quantity || 0;
+                    const water = inventory.find(i => i.key === 'water')?.quantity || 0;
+
+                    if (scraps >= 10 && ammo >= 5 && water >= 2) {
+                      adjustInventory('scraps', -10);
+                      adjustInventory('ammo', -5);
+                      adjustInventory('water', -2);
+                      updateSector(selectedSector.id, { status: 'secure' });
+                      addLog(selectedSector.id, 'ENGINEER', 'Sector structural integrity restored. Defenses operational.');
+                      triggerUINotification(`${selectedSector.name} successfully repaired.`);
+                    } else {
+                      triggerUINotification('INSUFFICIENT RESOURCES FOR REPAIR!', 'error');
+                    }
+                  }}
+                >
+                  INITIATE REPAIRS
+                </button>
+              </div>
+            )}
 
             {/* GUARD SCHEDULER */}
             <div style={{ marginBottom: '16px', background: 'var(--bg-black)', padding: '12px', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
