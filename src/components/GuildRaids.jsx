@@ -55,7 +55,7 @@ export default function GuildRaids({
     adjustInventory('water', -totalWaterCost)
 
     const now = Date.now()
-    const execTime = now + (2 * 60 * 60 * 1000) // 2 Hours from now
+    const execTime = now + (0.5 * 60 * 60 * 1000) // 1/2 Hour from now
 
     const newRaid = {
       id: now,
@@ -84,12 +84,12 @@ export default function GuildRaids({
         <form onSubmit={handlePlanRaid} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
             <label style={{ display: 'block', fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '6px', fontFamily: 'var(--font-mono)' }}>TARGET DESIGNATION</label>
-            <input 
-              type="text" 
-              className="cyber-input" 
-              value={targetName} 
-              onChange={e => setTargetName(e.target.value)} 
-              placeholder="e.g. Scavenger Camp, Rival Outpost..." 
+            <input
+              type="text"
+              className="cyber-input"
+              value={targetName}
+              onChange={e => setTargetName(e.target.value)}
+              placeholder="e.g. Scavenger Camp, Rival Outpost..."
               required
             />
           </div>
@@ -99,11 +99,11 @@ export default function GuildRaids({
               <span>STRIKE TEAM SIZE</span>
               <span style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>{raidersCount} OPERATOR(S)</span>
             </label>
-            <input 
-              type="range" 
-              min="1" 
-              max="20" 
-              value={raidersCount} 
+            <input
+              type="range"
+              min="1"
+              max="20"
+              value={raidersCount}
               onChange={e => setRaidersCount(parseInt(e.target.value))}
               style={{ width: '100%', accentColor: 'var(--color-primary)' }}
             />
