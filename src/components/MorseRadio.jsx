@@ -18,7 +18,7 @@ const REVERSE_MORSE = Object.fromEntries(
   Object.entries(MORSE_DICT).map(([k, v]) => [v, k])
 )
 
-export default function MorseRadio({ triggerUINotification }) {
+export default function MorseRadio({ triggerUINotification, addBroadcast, broadcasts = [] }) {
   const [inputText, setInputText] = useState('SOS')
   const [morseOutput, setMorseOutput] = useState('... --- ...')
   const [isPlaying, setIsPlaying] = useState(false)
@@ -162,6 +162,7 @@ export default function MorseRadio({ triggerUINotification }) {
     setTimeout(() => {
       setIsPlaying(false)
       triggerUINotification('Morse transmission complete.')
+      if (addBroadcast) addBroadcast(`[${inputText}] ${morseOutput}`)
     }, totalTimeMs + 100)
   }
 
@@ -470,6 +471,35 @@ export default function MorseRadio({ triggerUINotification }) {
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
                 [ MHZ DIAL STATIC STATIC ... SHHHHHHHHHHHHHH ... TUNE FREQUENCIES ]
               </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* RECENT SYNDICATE BROADCASTS */}
+      <div className="cyber-panel primary-glow" style={{ padding: '16px' }}>
+        <h4 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
+          <Radio style={{ width: '16px', height: '16px' }} />
+          SYNDICATE BROADCAST LOG
+        </h4>
+        <div style={{ background: '#050608', border: '1px dashed var(--color-border)', borderRadius: '4px', padding: '12px', maxHeight: '150px', overflowY: 'auto' }}>
+          {broadcasts.length === 0 ? (
+            <div style={{ color: 'var(--color-text-muted)', fontSize: '12px', fontFamily: 'var(--font-mono)', textAlign: 'center' }}>
+              No recent broadcasts in this sector.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {broadcasts.map((b, i) => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderBottom: '1px solid #141822', paddingBottom: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>
+                    <span>{b.operator}</span>
+                    <span>{b.timestamp}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--color-primary)', fontFamily: 'var(--font-mono)' }}>
+                    {b.message}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

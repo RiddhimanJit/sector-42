@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { Navigation, Compass, ShieldAlert, Crosshair, Users, Activity, PlusCircle, CheckCircle, Radio } from 'lucide-react'
 
-export default function ExpeditionPlanner({ addInventoryResources, triggerUINotification }) {
+export default function ExpeditionPlanner({ addInventoryResources, triggerUINotification, expeditions = [], updateExpeditions, currentUser }) {
   const [targetPOI, setTargetPOI] = useState('pharmacy')
   const [squadSize, setSquadSize] = useState(3)
   const [timeOfDay, setTimeOfDay] = useState('day')
   const [ammoAssigned, setAmmoAssigned] = useState(30)
   const [medsAssigned, setMedsAssigned] = useState(2)
-  const [activeExpeditions, setActiveExpeditions] = useState([])
 
   // Points of Interest metadata
   const locations = {
@@ -66,22 +65,25 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
       progress: 0,
       status: 'dispatched',
       logs: ['[00:00] Dispatch: Squad departed Command Bunker via tactical vehicle.'],
-      timer: 20 // 20 seconds duration for rapid testing and realistic feel
+      timer: 20, // 20 seconds duration for rapid testing and realistic feel
+      dispatcherId: currentUser?.uid || 'offline-op'
     }
 
-    setActiveExpeditions(prev => [newExpedition, ...prev])
+    if (updateExpeditions) updateExpeditions(prev => [newExpedition, ...prev])
     triggerUINotification(`Expedition dispatched to ${loc.name}!`)
   }
 
   // Handle simulated tick updates for active expeditions
   useEffect(() => {
-    if (activeExpeditions.length === 0) return
+    if (!expeditions || expeditions.length === 0 || !updateExpeditions) return
 
     const interval = setInterval(() => {
-      setActiveExpeditions(prev => {
+      updateExpeditions(prev => {
         let updatedNeeded = false
         const nextList = prev.map(exp => {
           if (exp.status === 'completed' || exp.status === 'aborted') return exp
+          if (exp.dispatcherId !== (currentUser?.uid || 'offline-op')) return exp // Only the dispatcher ticks the progress
+
           updatedNeeded = true
           
           const nextProgress = Math.min(100, exp.progress + 5)
@@ -130,12 +132,12 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
           }
         })
 
-        return nextList
+        return updatedNeeded ? nextList : prev
       })
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [activeExpeditions])
+  }, [expeditions, currentUser, updateExpeditions])
 
   const riskScore = calculateRisk()
   const riskTier = getRiskTier(riskScore)
@@ -329,12 +331,12 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
         </h4>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {activeExpeditions.length === 0 ? (
+          {!expeditions || expeditions.length === 0 ? (
             <div style={{ background: 'var(--bg-black)', border: '1px solid var(--color-border)', padding: '24px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
               No active expeditions. Plan a mission above and launch scouts.
             </div>
           ) : (
-            activeExpeditions.map((exp) => (
+            expeditions.map((exp) => (
               <div 
                 key={exp.id} 
                 style={{ 

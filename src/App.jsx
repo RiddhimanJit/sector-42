@@ -43,6 +43,8 @@ export default function App() {
   const [population, setPopulation] = useState(42)
   const [inventory, setInventory] = useState(DEFAULT_INVENTORY)
   const [sectors, setSectors] = useState(DEFAULT_SECTORS)
+  const [expeditions, setExpeditions] = useState([])
+  const [broadcasts, setBroadcasts] = useState([])
   
   // Terminal Customization states
   const [lowPowerMode, setLowPowerMode] = useState(false)
@@ -94,6 +96,8 @@ export default function App() {
         if (factionData.inventory) setInventory(factionData.inventory);
         if (factionData.sectors) setSectors(factionData.sectors);
         if (factionData.population) setPopulation(factionData.population);
+        if (factionData.expeditions) setExpeditions(factionData.expeditions);
+        if (factionData.broadcasts) setBroadcasts(factionData.broadcasts);
       }
     });
     return () => unsubscribe();
@@ -186,6 +190,26 @@ export default function App() {
     const newPop = typeof val === 'function' ? val(population) : val;
     if (currentUser && currentUser.factionId !== 'free-roamer') syncFactionData(currentUser.factionId, { population: newPop });
   }
+
+  // Update expeditions safely
+  const updateExpeditions = (action) => {
+    setExpeditions(prev => {
+      const newExpeditions = typeof action === 'function' ? action(prev) : action;
+      if (currentUser && currentUser.factionId !== 'free-roamer') syncFactionData(currentUser.factionId, { expeditions: newExpeditions });
+      return newExpeditions;
+    });
+  };
+
+  // Add global morse broadcast
+  const addBroadcast = (message) => {
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setBroadcasts(prev => {
+      const newBroadcasts = [{ timestamp, operator: currentUser?.username || 'UNKNOWN', message }, ...prev].slice(0, 10);
+      if (currentUser && currentUser.factionId !== 'free-roamer') syncFactionData(currentUser.factionId, { broadcasts: newBroadcasts });
+      return newBroadcasts;
+    });
+    triggerUINotification(`BROADCAST TRANSMITTED: ${message.slice(0, 20)}...`);
+  };
 
   // Global Sync exporter
   const exportState = () => {
@@ -280,7 +304,7 @@ export default function App() {
           }
         } else {
           setInventory(currentInv => {
-             syncFactionData(currentUser.factionId, { inventory: currentInv, sectors, population }).catch(e => console.error("Faction sync failed", e));
+             syncFactionData(currentUser.factionId, { inventory: currentInv, sectors, population, expeditions, broadcasts }).catch(e => console.error("Faction sync failed", e));
              return currentInv;
           });
         }
@@ -512,6 +536,10 @@ export default function App() {
                 importState={importState}
                 currentUser={currentUser}
                 isOnline={isOnline}
+                expeditions={expeditions}
+                updateExpeditions={updateExpeditions}
+                broadcasts={broadcasts}
+                addBroadcast={addBroadcast}
               />
             )
           })()}
