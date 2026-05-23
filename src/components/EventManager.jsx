@@ -163,6 +163,15 @@ export default function EventManager({
   }, [plannedRaids, currentUser]);
 
   const resolveOffensiveRaid = (raid) => {
+    // Determine failure chance: base 40%, minus 2% per raider. Minimum 5% chance.
+    const failChance = Math.max(5, 40 - (raid.raiders * 2));
+    const roll = Math.random() * 100;
+
+    if (roll < failChance) {
+      triggerUINotification(`CRITICAL FAILURE: Strike team ambushed at ${raid.targetName}! Forces retreated with zero loot.`);
+      return; // No loot yielded
+    }
+
     // Generate loot based on raider count
     const lootMulti = raid.raiders;
     const foodLoot = Math.floor(Math.random() * 50) * lootMulti;

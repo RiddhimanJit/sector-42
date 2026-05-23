@@ -102,7 +102,17 @@ export default function App() {
 
     const unsubscribe = subscribeToFactionData(currentUser.factionId, (factionData) => {
       if (factionData) {
-        if (factionData.inventory) setInventory(factionData.inventory);
+        if (factionData.inventory) {
+          setInventory(prev => {
+            const newInv = [...factionData.inventory];
+            DEFAULT_INVENTORY.forEach(defItem => {
+              if (!newInv.find(i => i.key === defItem.key)) {
+                newInv.push(defItem);
+              }
+            });
+            return newInv;
+          });
+        }
         if (factionData.sectors) setSectors(factionData.sectors);
         if (factionData.population) setPopulation(factionData.population);
         if (factionData.expeditions) setExpeditions(factionData.expeditions);
@@ -274,10 +284,18 @@ export default function App() {
     try {
       if (importedData.population) setPopulation(importedData.population)
       if (importedData.inventory) {
-        setInventory(prev => prev.map(item => {
-          const match = importedData.inventory.find(i => i.key === item.key)
-          return match ? { ...item, quantity: match.quantity } : item
-        }))
+        setInventory(prev => {
+          const newInv = [...importedData.inventory];
+          DEFAULT_INVENTORY.forEach(defItem => {
+            if (!newInv.find(i => i.key === defItem.key)) {
+              newInv.push(defItem);
+            }
+          });
+          return newInv.map(item => {
+            const match = importedData.inventory.find(i => i.key === item.key);
+            return match ? { ...item, quantity: match.quantity } : item;
+          });
+        });
       }
       if (importedData.sectors) {
         setSectors(prev => prev.map(sec => {

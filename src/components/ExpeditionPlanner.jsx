@@ -104,29 +104,42 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
           } else if (nextProgress === 60) {
             newLog = `[00:12] Scout: Target goods loaded. Securing payload. Initiating exfiltration.`
           } else if (nextProgress === 80) {
-            newLog = `[00:16] Comm: Retreated to heavy transport. Heading back to HQ.`
+            // Failure roll based on risk (max 66% chance of failure at max risk)
+            const failChance = exp.riskScore / 1.5; 
+            const roll = Math.random() * 100;
+            if (roll < failChance) {
+               nextStatus = 'failed';
+               newLog = `[00:16] CRITICAL: Squad ambushed! Forced to retreat. Gear abandoned.`;
+            } else {
+               newLog = `[00:16] Comm: Retreated to heavy transport. Heading back to HQ.`
+            }
           } else if (nextProgress === 100) {
-            nextStatus = 'completed'
-            newLog = `[00:20] Command: Arrival confirmed! Squad returned safely. Rations and gear deposited.`
-
-            // Calculate final loot yield
-            let yieldQty = 0
-            if (exp.lootType === 'food') yieldQty = Math.floor(Math.random() * 60) + 30
-            else if (exp.lootType === 'water') yieldQty = Math.floor(Math.random() * 100) + 50
-            else if (exp.lootType === 'medicine') yieldQty = Math.floor(Math.random() * 10) + 4
-            else if (exp.lootType === 'ammo') yieldQty = Math.floor(Math.random() * 80) + 40
-            else if (exp.lootType === 'fuel') yieldQty = Math.floor(Math.random() * 50) + 20
-
-            // Calculate scraps yield based on difficulty (5 - 100)
-            // Higher riskScore = higher potential yield
-            const riskMultiplier = Math.max(0.1, exp.riskScore / 100)
-            const scrapYield = Math.floor(5 + (Math.random() * 95 * riskMultiplier))
-
-            // Add items to inventory and trigger notifications
-            addInventoryResources(exp.lootType, yieldQty)
-            addInventoryResources('scraps', scrapYield)
-            triggerUINotification(`SUCCESS: Retrieved +${yieldQty} ${exp.lootType} and +${scrapYield} Scraps!`)
-            exp.yieldDescription = `+${yieldQty} ${exp.lootType.toUpperCase()}, +${scrapYield} SCRAPS`
+            if (exp.status === 'failed') {
+              nextStatus = 'failed'
+              newLog = `[00:20] Command: Survivors returned. Mission marked as failure. No loot recovered.`
+            } else {
+              nextStatus = 'completed'
+              newLog = `[00:20] Command: Arrival confirmed! Squad returned safely. Rations and gear deposited.`
+  
+              // Calculate final loot yield
+              let yieldQty = 0
+              if (exp.lootType === 'food') yieldQty = Math.floor(Math.random() * 60) + 30
+              else if (exp.lootType === 'water') yieldQty = Math.floor(Math.random() * 100) + 50
+              else if (exp.lootType === 'medicine') yieldQty = Math.floor(Math.random() * 10) + 4
+              else if (exp.lootType === 'ammo') yieldQty = Math.floor(Math.random() * 80) + 40
+              else if (exp.lootType === 'fuel') yieldQty = Math.floor(Math.random() * 50) + 20
+  
+              // Calculate scraps yield based on difficulty (5 - 100)
+              // Higher riskScore = higher potential yield
+              const riskMultiplier = Math.max(0.1, exp.riskScore / 100)
+              const scrapYield = Math.floor(5 + (Math.random() * 95 * riskMultiplier))
+  
+              // Add items to inventory and trigger notifications
+              addInventoryResources(exp.lootType, yieldQty)
+              addInventoryResources('scraps', scrapYield)
+              triggerUINotification(`SUCCESS: Retrieved +${yieldQty} ${exp.lootType} and +${scrapYield} Scraps!`)
+              exp.yieldDescription = `+${yieldQty} ${exp.lootType.toUpperCase()}, +${scrapYield} SCRAPS`
+            }
           }
 
           return {
