@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { 
-  Shield, 
-  Flame, 
-  Compass, 
-  Radio, 
-  BookOpen, 
-  Share2, 
   Wifi, 
   WifiOff, 
   Volume2, 
@@ -16,14 +10,8 @@ import {
   EyeOff
 } from 'lucide-react'
 
-// Import components
-import RadarMap from './components/RadarMap'
-import InventoryTracker from './components/InventoryTracker'
-import ExpeditionPlanner from './components/ExpeditionPlanner'
-import MorseRadio from './components/MorseRadio'
-import Manual from './components/Manual'
-import MeshSync from './components/MeshSync'
 import BootScreen from './components/BootScreen'
+import { plugins } from './plugins'
 
 const DEFAULT_SECTORS = [
   { id: 'wt-1', name: 'Watchtower NW', status: 'secure', guards: 1, logs: [{ timestamp: '18:10', operator: 'Sentinel-1', message: 'Perimeter check complete. Visual range clear.' }] },
@@ -330,59 +318,20 @@ export default function App() {
             COMMAND CONSOLE NAVIGATION
           </span>
 
-          <button 
-            className={`cyber-btn ${activeTab === 'radar' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('radar')}
-            style={{ width: '100%', justifyContent: 'flex-start' }}
-          >
-            <Shield style={{ width: '16px', height: '16px' }} />
-            DEFENSE RADAR
-          </button>
-
-          <button 
-            className={`cyber-btn ${activeTab === 'inventory' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('inventory')}
-            style={{ width: '100%', justifyContent: 'flex-start' }}
-          >
-            <Flame style={{ width: '16px', height: '16px' }} />
-            RESERVES INDEX
-          </button>
-
-          <button 
-            className={`cyber-btn ${activeTab === 'expedition' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('expedition')}
-            style={{ width: '100%', justifyContent: 'flex-start' }}
-          >
-            <Compass style={{ width: '16px', height: '16px' }} />
-            EXPEDITIONS
-          </button>
-
-          <button 
-            className={`cyber-btn ${activeTab === 'morse' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('morse')}
-            style={{ width: '100%', justifyContent: 'flex-start' }}
-          >
-            <Radio style={{ width: '16px', height: '16px' }} />
-            FIELD TELEGRAPHY
-          </button>
-
-          <button 
-            className={`cyber-btn ${activeTab === 'manual' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('manual')}
-            style={{ width: '100%', justifyContent: 'flex-start' }}
-          >
-            <BookOpen style={{ width: '16px', height: '16px' }} />
-            SURVIVAL MANUAL
-          </button>
-
-          <button 
-            className={`cyber-btn ${activeTab === 'sync' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('sync')}
-            style={{ width: '100%', justifyContent: 'flex-start' }}
-          >
-            <Share2 style={{ width: '16px', height: '16px' }} />
-            MESH OFFLINE SYNC
-          </button>
+          {plugins.map(plugin => {
+            const Icon = plugin.icon;
+            return (
+              <button 
+                key={plugin.id}
+                className={`cyber-btn ${activeTab === plugin.id ? 'active' : ''}`} 
+                onClick={() => setActiveTab(plugin.id)}
+                style={{ width: '100%', justifyContent: 'flex-start' }}
+              >
+                <Icon style={{ width: '16px', height: '16px' }} />
+                {plugin.name}
+              </button>
+            )
+          })}
 
           {/* TELEMETRY READOUT SUMMARY IN SIDEBAR */}
           <div style={{ marginTop: '16px', background: 'var(--bg-black)', border: '1px solid var(--color-border)', borderRadius: '4px', padding: '12px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
@@ -417,49 +366,30 @@ export default function App() {
         <section style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* TAB ROUTING DISPLAY VIEWER */}
-          {activeTab === 'radar' && (
-            <RadarMap 
-              sectors={sectors} 
-              updateSector={updateSector} 
-              addLog={addLog} 
-              lowBandwidth={lowPowerMode} 
-            />
-          )}
+          {(() => {
+            const activePlugin = plugins.find(p => p.id === activeTab);
+            const ActiveComponent = activePlugin ? activePlugin.component : null;
 
-          {activeTab === 'inventory' && (
-            <InventoryTracker 
-              inventory={inventory} 
-              adjustInventory={adjustInventory}
-              population={population}
-              setPopulation={setPopulation}
-              activeGuards={getActiveGuards()}
-            />
-          )}
+            if (!ActiveComponent) return null;
 
-          {activeTab === 'expedition' && (
-            <ExpeditionPlanner 
-              addInventoryResources={addInventoryResources}
-              triggerUINotification={triggerUINotification}
-            />
-          )}
-
-          {activeTab === 'morse' && (
-            <MorseRadio 
-              triggerUINotification={triggerUINotification}
-            />
-          )}
-
-          {activeTab === 'manual' && (
-            <Manual />
-          )}
-
-          {activeTab === 'sync' && (
-            <MeshSync 
-              exportState={exportState}
-              importState={importState}
-              triggerUINotification={triggerUINotification}
-            />
-          )}
+            return (
+              <ActiveComponent 
+                sectors={sectors} 
+                updateSector={updateSector} 
+                addLog={addLog} 
+                lowBandwidth={lowPowerMode} 
+                inventory={inventory} 
+                adjustInventory={adjustInventory}
+                population={population}
+                setPopulation={setPopulation}
+                activeGuards={getActiveGuards()}
+                addInventoryResources={addInventoryResources}
+                triggerUINotification={triggerUINotification}
+                exportState={exportState}
+                importState={importState}
+              />
+            )
+          })()}
 
         </section>
       </main>
