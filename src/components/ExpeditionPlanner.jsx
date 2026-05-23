@@ -117,10 +117,16 @@ export default function ExpeditionPlanner({ addInventoryResources, triggerUINoti
             else if (exp.lootType === 'ammo') yieldQty = Math.floor(Math.random() * 80) + 40
             else if (exp.lootType === 'fuel') yieldQty = Math.floor(Math.random() * 50) + 20
             
+            // Calculate scraps yield based on difficulty (5 - 100)
+            // Higher riskScore = higher potential yield
+            const riskMultiplier = Math.max(0.1, exp.riskScore / 100)
+            const scrapYield = Math.floor(5 + (Math.random() * 95 * riskMultiplier))
+
             // Add items to inventory and trigger notifications
             addInventoryResources(exp.lootType, yieldQty)
-            triggerUINotification(`SUCCESS: Expedition retrieved +${yieldQty} ${exp.lootType}!`)
-            exp.yieldDescription = `+${yieldQty} ${exp.lootType.toUpperCase()}`
+            addInventoryResources('scraps', scrapYield)
+            triggerUINotification(`SUCCESS: Retrieved +${yieldQty} ${exp.lootType} and +${scrapYield} Scraps!`)
+            exp.yieldDescription = `+${yieldQty} ${exp.lootType.toUpperCase()}, +${scrapYield} SCRAPS`
           }
 
           return {

@@ -11,7 +11,8 @@ export default function InventoryTracker({ inventory, adjustInventory, populatio
     water: 2.0,    // liters of water
     medicine: 0.05, // kits
     ammo: 0.1,     // rounds (standard security expenditure)
-    fuel: 0.15     // liters (generators)
+    fuel: 0.15,    // liters (generators)
+    scraps: 0      // scraps don't have a daily population burn rate
   }
 
   // Calculate active consumption rates
