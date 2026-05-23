@@ -43,8 +43,21 @@ if (isConfigured) {
 export { auth, db, isConfigured };
 
 // --- Auth Services ---
+let mockCurrentUser = null;
+const MOCK_USER_KEY = 'tsoc_mock_user';
+
+const triggerMockAuthChange = () => {
+  window.dispatchEvent(new Event('mock-auth-changed'));
+};
+
 export const registerUser = async (email, password, username, factionId) => {
-  if (!isConfigured) throw new Error("Firebase not configured. Check .env");
+  if (!isConfigured) {
+    const user = { uid: 'mock-' + Date.now(), email, username, factionId, inventory: [], score: 0 };
+    localStorage.setItem(MOCK_USER_KEY, JSON.stringify(user));
+    mockCurrentUser = user;
+    triggerMockAuthChange();
+    return user;
+  }
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
   
@@ -61,19 +74,37 @@ export const registerUser = async (email, password, username, factionId) => {
 };
 
 export const loginUser = async (email, password) => {
-  if (!isConfigured) throw new Error("Firebase not configured");
+  if (!isConfigured) {
+    const saved = localStorage.getItem(MOCK_USER_KEY);
+    if (saved) {
+      mockCurrentUser = JSON.parse(saved);
+      triggerMockAuthChange();
+      return mockCurrentUser;
+    }
+    throw new Error("Mock user not found. Please register first.");
+  }
   return await signInWithEmailAndPassword(auth, email, password);
 };
 
 export const logoutUser = async () => {
+  if (!isConfigured) {
+    mockCurrentUser = null;
+    triggerMockAuthChange();
+    return;
+  }
   if (auth) await signOut(auth);
 };
 
 export const subscribeToAuthChanges = (callback) => {
   if (!isConfigured) {
-    // If no firebase, simulate unauthenticated state immediately
-    setTimeout(() => callback(null), 100);
-    return () => {};
+    const saved = localStorage.getItem(MOCK_USER_KEY);
+    if (saved && !mockCurrentUser) mockCurrentUser = JSON.parse(saved);
+    
+    const handler = () => callback(mockCurrentUser);
+    window.addEventListener('mock-auth-changed', handler);
+    setTimeout(() => callback(mockCurrentUser), 100);
+    
+    return () => window.removeEventListener('mock-auth-changed', handler);
   }
   return onAuthStateChanged(auth, async (user) => {
     if (user) {

@@ -3,10 +3,10 @@ import { Trophy, Users, Star, Target, Crown, Award, Activity, AlertOctagon } fro
 import { subscribeToFactions, syncUserData } from '../services/firebase'
 
 // Simulated mock data for factions
-const INITIAL_FACTIONS = [
+export const INITIAL_FACTIONS = [
   { id: 'f-1', name: 'Iron Wolves', members: 42, score: 8520, status: 'Hostile', color: '239, 68, 68' },
   { id: 'f-2', name: 'Neon Vanguard', members: 128, score: 7100, status: 'Neutral', color: '59, 130, 246' },
-  { id: 'f-3', name: 'Bronze Barrons (You)', members: 42, score: 2500, status: 'Friendly', color: '34, 197, 94' },
+  { id: 'f-3', name: 'Bronze Barrons', members: 42, score: 2500, status: 'Friendly', color: '34, 197, 94' },
   { id: 'f-4', name: 'Scrap Barons', members: 15, score: 1950, status: 'Hostile', color: '245, 158, 11' },
   { id: 'f-5', name: 'Dust Walkers', members: 8, score: 1200, status: 'Neutral', color: '168, 85, 247' },
 ]

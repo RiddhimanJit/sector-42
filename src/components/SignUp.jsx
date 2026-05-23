@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, AlertOctagon, Users, Radio } from 'lucide-react';
 import { registerUser, loginUser, getFactionsOnce } from '../services/firebase';
+import { INITIAL_FACTIONS } from './GuildLeaderboard';
 
 export default function SignUp({ onComplete }) {
   const [isLogin, setIsLogin] = useState(false);
@@ -16,9 +17,14 @@ export default function SignUp({ onComplete }) {
   useEffect(() => {
     // Load available factions for the select list
     getFactionsOnce().then(data => {
-      setFactions(data);
+      if (data && data.length > 0) {
+        setFactions(data);
+      } else {
+        setFactions(INITIAL_FACTIONS);
+      }
     }).catch(err => {
       console.warn("Could not load factions", err);
+      setFactions(INITIAL_FACTIONS);
     });
   }, []);
 
