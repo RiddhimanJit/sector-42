@@ -173,6 +173,40 @@ export const subscribeToFactions = (callback) => {
   });
 };
 
+export const syncFactionData = async (factionId, data) => {
+  if (!factionId || factionId === 'free-roamer') return;
+  if (!isConfigured) {
+    const key = `tsoc_mock_faction_${factionId}`;
+    const existing = JSON.parse(localStorage.getItem(key) || '{}');
+    const updated = { ...existing, ...data };
+    localStorage.setItem(key, JSON.stringify(updated));
+    window.dispatchEvent(new Event(`mock-faction-changed-${factionId}`));
+    return;
+  }
+  const factionRef = doc(db, 'factions', factionId);
+  await updateDoc(factionRef, data);
+};
+
+export const subscribeToFactionData = (factionId, callback) => {
+  if (!factionId || factionId === 'free-roamer') return () => {};
+  if (!isConfigured) {
+    const key = `tsoc_mock_faction_${factionId}`;
+    const handler = () => {
+      const data = JSON.parse(localStorage.getItem(key) || 'null');
+      if (data) callback(data);
+    };
+    window.addEventListener(`mock-faction-changed-${factionId}`, handler);
+    setTimeout(handler, 100);
+    return () => window.removeEventListener(`mock-faction-changed-${factionId}`, handler);
+  }
+  const factionRef = doc(db, 'factions', factionId);
+  return onSnapshot(factionRef, (docSnap) => {
+    if (docSnap.exists()) {
+      callback({ id: docSnap.id, ...docSnap.data() });
+    }
+  });
+};
+
 // Helper function to seed initial factions if the db is empty
 export const seedFactionsIfEmpty = async () => {
   if (!isConfigured) return;

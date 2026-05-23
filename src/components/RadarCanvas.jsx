@@ -16,7 +16,12 @@ export default function RadarCanvas({ lowBandwidth }) {
   const animRef = useRef(null)
   const angleRef = useRef(0)
   const blipsRef = useRef(
-    BLIPS.map(b => ({ ...b, trigAngle: Math.random() * Math.PI * 2 }))
+    BLIPS.map(b => ({ 
+      ...b, 
+      trigAngle: Math.random() * Math.PI * 2,
+      dx: (Math.random() - 0.5) * 0.001,
+      dy: (Math.random() - 0.5) * 0.001
+    }))
   )
   const hordeRef = useRef({ h1: 2.3, h2: 4.1 })
   const h1DistRef = useRef(null)
@@ -141,6 +146,23 @@ export default function RadarCanvas({ lowBandwidth }) {
       // Blips
       const blips = blipsRef.current
       blips.forEach(b => {
+        // Random drift physics
+        b.x += b.dx;
+        b.y += b.dy;
+        const distSq = b.x * b.x + b.y * b.y;
+        if (distSq > 0.64) {
+          b.dx = -b.dx;
+          b.dy = -b.dy;
+        } else if (Math.random() < 0.02) {
+          b.dx += (Math.random() - 0.5) * 0.0005;
+          b.dy += (Math.random() - 0.5) * 0.0005;
+          const speedSq = b.dx * b.dx + b.dy * b.dy;
+          if (speedSq > 0.000005) {
+             b.dx *= 0.8;
+             b.dy *= 0.8;
+          }
+        }
+
         const age = (angle - b.trigAngle + Math.PI * 8) % (Math.PI * 2)
         const alpha = Math.max(0, 1 - age / (Math.PI * 1.6))
 

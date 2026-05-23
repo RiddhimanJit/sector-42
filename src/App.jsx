@@ -13,7 +13,7 @@ import {
 import BootScreen from './components/BootScreen'
 import SignUp from './components/SignUp'
 import { plugins } from './plugins'
-import { subscribeToAuthChanges, syncUserData, isConfigured, seedFactionsIfEmpty, logoutUser } from './services/firebase'
+import { subscribeToAuthChanges, syncUserData, isConfigured, seedFactionsIfEmpty, logoutUser, syncFactionData, subscribeToFactionData } from './services/firebase'
 
 const DEFAULT_SECTORS = [
   { id: 'wt-1', name: 'Watchtower NW', status: 'secure', guards: 1, logs: [{ timestamp: '18:10', operator: 'Sentinel-1', message: 'Perimeter check complete. Visual range clear.' }] },
@@ -78,12 +78,26 @@ export default function App() {
     seedFactionsIfEmpty()
     const unsubscribe = subscribeToAuthChanges((user) => {
       setCurrentUser(user)
-      if (user && user.inventory && user.inventory.length > 0) {
+      if (user && user.factionId === 'free-roamer' && user.inventory && user.inventory.length > 0) {
         setInventory(user.inventory)
       }
     })
     return () => unsubscribe()
   }, [])
+
+  // Faction Data Subscription
+  useEffect(() => {
+    if (!currentUser || currentUser.factionId === 'free-roamer') return;
+    
+    const unsubscribe = subscribeToFactionData(currentUser.factionId, (factionData) => {
+      if (factionData) {
+        if (factionData.inventory) setInventory(factionData.inventory);
+        if (factionData.sectors) setSectors(factionData.sectors);
+        if (factionData.population) setPopulation(factionData.population);
+      }
+    });
+    return () => unsubscribe();
+  }, [currentUser?.factionId]);
 
   // Trigger brief military notification ticker in top right
   const triggerUINotification = (text) => {
@@ -113,16 +127,21 @@ export default function App() {
 
   // Adjust Inventory items safely
   const adjustInventory = (key, delta) => {
-    setInventory(prev => prev.map(item => {
-      if (item.key === key) {
-        const nextQty = Math.max(0, Math.min(item.max, item.quantity + delta))
-        if (nextQty !== item.quantity) {
-          triggerUINotification(`${item.name} stock adjusted: ${delta > 0 ? '+' : ''}${delta} ${item.unit}`)
+    setInventory(prev => {
+      const newInv = prev.map(item => {
+        if (item.key === key) {
+          const nextQty = Math.max(0, Math.min(item.max, item.quantity + delta))
+          if (nextQty !== item.quantity) {
+            triggerUINotification(`${item.name} stock adjusted: ${delta > 0 ? '+' : ''}${delta} ${item.unit}`)
+          }
+          return { ...item, quantity: nextQty }
         }
-        return { ...item, quantity: nextQty }
-      }
-      return item
-    }))
+        return item
+      });
+      if (currentUser && currentUser.factionId !== 'free-roamer') syncFactionData(currentUser.factionId, { inventory: newInv });
+      else if (currentUser && isConfigured) syncUserData(currentUser.uid, newInv);
+      return newInv;
+    })
   }
 
   // Specific callback for expeditions yielding resources
@@ -132,25 +151,40 @@ export default function App() {
 
   // Update Sector properties (e.g. guards, alert level status)
   const updateSector = (id, newProps) => {
-    setSectors(prev => prev.map(sector => {
-      if (sector.id === id) {
-        return { ...sector, ...newProps }
-      }
-      return sector
-    }))
+    setSectors(prev => {
+      const newSectors = prev.map(sector => {
+        if (sector.id === id) {
+          return { ...sector, ...newProps }
+        }
+        return sector
+      });
+      if (currentUser && currentUser.factionId !== 'free-roamer') syncFactionData(currentUser.factionId, { sectors: newSectors });
+      return newSectors;
+    })
   }
 
   // Add a secure military record to a specific sector log index
   const addLog = (sectorId, operator, message) => {
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    setSectors(prev => prev.map(sector => {
-      if (sector.id === sectorId) {
-        const updatedLogs = [...sector.logs, { timestamp, operator, message }]
-        return { ...sector, logs: updatedLogs }
-      }
-      return sector
-    }))
+    setSectors(prev => {
+      const newSectors = prev.map(sector => {
+        if (sector.id === sectorId) {
+          const updatedLogs = [...sector.logs, { timestamp, operator, message }]
+          return { ...sector, logs: updatedLogs }
+        }
+        return sector
+      });
+      if (currentUser && currentUser.factionId !== 'free-roamer') syncFactionData(currentUser.factionId, { sectors: newSectors });
+      return newSectors;
+    })
     triggerUINotification(`NEW SEC-LOG: ${message.slice(0, 32)}...`)
+  }
+
+  // Wrapped population setter to sync
+  const handleSetPopulation = (val) => {
+    setPopulation(val);
+    const newPop = typeof val === 'function' ? val(population) : val;
+    if (currentUser && currentUser.factionId !== 'free-roamer') syncFactionData(currentUser.factionId, { population: newPop });
   }
 
   // Global Sync exporter
@@ -236,11 +270,20 @@ export default function App() {
       }
 
       // Background Sync to Firebase
-      if (isOnline && currentUser && isConfigured) {
-        setInventory(currentInv => {
-          syncUserData(currentUser.uid, currentInv).catch(e => console.error("Sync failed", e));
-          return currentInv;
-        });
+      if (isOnline && currentUser) {
+        if (currentUser.factionId === 'free-roamer') {
+          if (isConfigured) {
+            setInventory(currentInv => {
+              syncUserData(currentUser.uid, currentInv).catch(e => console.error("Sync failed", e));
+              return currentInv;
+            });
+          }
+        } else {
+          setInventory(currentInv => {
+             syncFactionData(currentUser.factionId, { inventory: currentInv, sectors, population }).catch(e => console.error("Faction sync failed", e));
+             return currentInv;
+          });
+        }
       }
 
     }, 10000)
@@ -461,7 +504,7 @@ export default function App() {
                 inventory={inventory} 
                 adjustInventory={adjustInventory}
                 population={population}
-                setPopulation={setPopulation}
+                setPopulation={handleSetPopulation}
                 activeGuards={getActiveGuards()}
                 addInventoryResources={addInventoryResources}
                 triggerUINotification={triggerUINotification}
