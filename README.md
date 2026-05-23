@@ -17,6 +17,9 @@ Track water, food rations, med-kits, ammunition, and diesel fuel reserves. A bui
 ### Expedition & Scavenge Planner
 Plan scavenging missions to points of interest across the wasteland. The system calculates a dynamic **Risk Score** (Low → Extreme) based on distance, time of day, squad size, and gear loadout. Active expeditions stream simulated radio comm logs in real-time.
 
+### Global Syndicate Leaderboard
+Track your network points and standing against other wasteland factions (e.g., Iron Wolves, Neon Vanguard). Contribute local survival resources to boost your faction's rank and increase your overall network score within the global syndicate.
+
 ###  Shortwave Radio & Morse Utility
 - **Morse Encoder**: Type plaintext and transmit as synthesized 750 Hz audio beeps or full-screen visual light flashes.
 - **Tactile Telegraph Key**: Tap to input Morse code manually — short click for dot, hold for dash — with live character decoding.
@@ -47,7 +50,7 @@ One-click toggle strips all CRT scanline overlays, glow animations, and visual e
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -92,12 +95,15 @@ ridhima/
 │   ├── index.css                       # CRT design system & CSS variables
 │   ├── App.jsx                         # Global state controller & tab router
 │   └── components/
+│       ├── BootScreen.jsx              # CRT boot sequence & initialization
 │       ├── RadarMap.jsx                # Interactive SVG perimeter defense map
+│       ├── RadarCanvas.jsx             # Animated sweeping CRT radar display
 │       ├── InventoryTracker.jsx        # Resource reserves & burn rate calculator
 │       ├── ExpeditionPlanner.jsx       # Squad dispatch & risk projection engine
-│       ├── MorseRadio.jsx             # Morse encoder, telegraph key & frequency tuner
+│       ├── GuildLeaderboard.jsx        # Global syndicate ranking & faction contribution
+│       ├── MorseRadio.jsx              # Morse encoder, telegraph key & frequency tuner
 │       ├── Manual.jsx                  # Searchable survival field manual
-│       └── MeshSync.jsx               # Offline JSON telemetry sync system
+│       └── MeshSync.jsx                # Offline JSON telemetry sync system
 ```
 
 ---
