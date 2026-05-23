@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
-import { Trophy, Users, Star, Target, Crown, Award, Activity } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Trophy, Users, Star, Target, Crown, Award, Activity, AlertOctagon } from 'lucide-react'
+import { subscribeToFactions, syncUserData } from '../services/firebase'
 
 // Simulated mock data for factions
 const INITIAL_FACTIONS = [
@@ -10,12 +11,23 @@ const INITIAL_FACTIONS = [
   { id: 'f-5', name: 'Dust Walkers', members: 8, score: 1200, status: 'Neutral', color: '168, 85, 247' },
 ]
 
-export default function GuildLeaderboard({ inventory, adjustInventory, triggerUINotification, population }) {
+export default function GuildLeaderboard({ inventory, adjustInventory, triggerUINotification, population, currentUser, isOnline }) {
   const [factions, setFactions] = useState(INITIAL_FACTIONS)
   const [contributionAmount, setContributionAmount] = useState(10)
 
+  useEffect(() => {
+    if (isOnline) {
+      const unsubscribe = subscribeToFactions((data) => {
+        if (data && data.length > 0) setFactions(data)
+      })
+      return () => unsubscribe()
+    }
+  }, [isOnline])
+
   // Sort factions by score
   const sortedFactions = [...factions].sort((a, b) => b.score - a.score)
+  const isFreeRoamer = currentUser?.factionId === 'free-roamer'
+  const localFactionId = currentUser?.factionId || 'f-3'
 
   const handleContribute = (resourceKey) => {
     const item = inventory.find(i => i.key === resourceKey)
@@ -33,9 +45,14 @@ export default function GuildLeaderboard({ inventory, adjustInventory, triggerUI
     const pointsPerUnit = (resourceKey === 'ammo' || resourceKey === 'medicine') ? 5 : 1
     const scoreIncrease = contributionAmount * pointsPerUnit
 
-    // Update local faction score
+    // Sync to backend if online, otherwise just update locally
+    if (isOnline && currentUser) {
+      syncUserData(currentUser.uid, inventory, scoreIncrease).catch(e => console.error("Contribute sync failed", e));
+    }
+
+    // Update local faction score for immediate feedback
     setFactions(prev => prev.map(f => {
-      if (f.id === 'f-3') {
+      if (f.id === localFactionId) {
         return { ...f, score: f.score + scoreIncrease }
       }
       return f
@@ -66,15 +83,15 @@ export default function GuildLeaderboard({ inventory, adjustInventory, triggerUI
 
           <div style={{ background: 'var(--bg-black)', border: '1px solid var(--color-border)', borderRadius: '4px', padding: '12px' }}>
             <div style={{ color: 'var(--color-text-muted)', fontSize: '10px', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>CURRENT STANDING</div>
-            <div style={{ fontSize: '20px', fontFamily: 'var(--font-display)', color: 'var(--color-success)', fontWeight: 'bold' }}>
-              RANK #{sortedFactions.findIndex(f => f.id === 'f-3') + 1}
+            <div style={{ fontSize: '20px', fontFamily: 'var(--font-display)', color: isFreeRoamer ? 'var(--color-text-muted)' : 'var(--color-success)', fontWeight: 'bold' }}>
+              {isFreeRoamer ? 'UNRANKED' : `RANK #${sortedFactions.findIndex(f => f.id === localFactionId) + 1 || '?'}`}
             </div>
           </div>
 
           <div style={{ background: 'var(--bg-black)', border: '1px solid var(--color-border)', borderRadius: '4px', padding: '12px' }}>
             <div style={{ color: 'var(--color-text-muted)', fontSize: '10px', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>NETWORK SCORE</div>
-            <div style={{ fontSize: '20px', fontFamily: 'var(--font-display)', color: 'var(--color-primary)', fontWeight: 'bold' }}>
-              {factions.find(f => f.id === 'f-3').score.toLocaleString()} PTS
+            <div style={{ fontSize: '20px', fontFamily: 'var(--font-display)', color: isFreeRoamer ? 'var(--color-text-muted)' : 'var(--color-primary)', fontWeight: 'bold' }}>
+              {isFreeRoamer ? 'N/A' : `${factions.find(f => f.id === localFactionId)?.score.toLocaleString() || 0} PTS`}
             </div>
           </div>
 
@@ -88,6 +105,12 @@ export default function GuildLeaderboard({ inventory, adjustInventory, triggerUI
         </div>
 
         {/* CONTRIBUTION AREA */}
+        {isFreeRoamer ? (
+          <div style={{ marginTop: '16px', borderTop: '1px solid var(--color-border)', paddingTop: '16px', color: 'var(--color-text-muted)', fontSize: '11px', fontFamily: 'var(--font-mono)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <AlertOctagon style={{ width: '16px', height: '16px' }} />
+            FREE ROAMER: You are operating independently. Network contributions are disabled.
+          </div>
+        ) : (
         <div style={{ marginTop: '16px', borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
           <div style={{ color: 'var(--color-text-muted)', fontSize: '11px', fontFamily: 'var(--font-mono)', marginBottom: '12px' }}>
             CONTRIBUTE SURVIVAL RESOURCES TO BOOST FACTION STANDING:
@@ -115,6 +138,7 @@ export default function GuildLeaderboard({ inventory, adjustInventory, triggerUI
             ))}
           </div>
         </div>
+        )}
 
       </div>
 
@@ -139,7 +163,7 @@ export default function GuildLeaderboard({ inventory, adjustInventory, triggerUI
           {/* List */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {sortedFactions.map((faction, index) => {
-              const isLocal = faction.id === 'f-3'
+              const isLocal = faction.id === localFactionId
               return (
                 <div
                   key={faction.id}

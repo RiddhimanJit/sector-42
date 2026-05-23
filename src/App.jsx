@@ -11,7 +11,9 @@ import {
 } from 'lucide-react'
 
 import BootScreen from './components/BootScreen'
+import SignUp from './components/SignUp'
 import { plugins } from './plugins'
+import { subscribeToAuthChanges, syncUserData, isConfigured, seedFactionsIfEmpty, logoutUser } from './services/firebase'
 
 const DEFAULT_SECTORS = [
   { id: 'wt-1', name: 'Watchtower NW', status: 'secure', guards: 1, logs: [{ timestamp: '18:10', operator: 'Sentinel-1', message: 'Perimeter check complete. Visual range clear.' }] },
@@ -36,6 +38,8 @@ const DEFAULT_INVENTORY = [
 export default function App() {
   const [booted, setBooted] = useState(false)
   const [activeTab, setActiveTab] = useState('radar')
+  const [currentUser, setCurrentUser] = useState(undefined)
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [population, setPopulation] = useState(42)
   const [inventory, setInventory] = useState(DEFAULT_INVENTORY)
   const [sectors, setSectors] = useState(DEFAULT_SECTORS)
@@ -49,6 +53,36 @@ export default function App() {
 
   const handleBootComplete = useCallback(() => {
     setBooted(true)
+  }, [])
+
+  // Online/Offline detection
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      triggerUINotification('MESH CONNECTION RESTORED. Online operations active.')
+    }
+    const handleOffline = () => {
+      setIsOnline(false)
+      triggerUINotification('MESH CONNECTION LOST. Operating in offline cache mode.')
+    }
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // Auth Subscription
+  useEffect(() => {
+    seedFactionsIfEmpty()
+    const unsubscribe = subscribeToAuthChanges((user) => {
+      setCurrentUser(user)
+      if (user && user.inventory && user.inventory.length > 0) {
+        setInventory(user.inventory)
+      }
+    })
+    return () => unsubscribe()
   }, [])
 
   // Trigger brief military notification ticker in top right
@@ -201,6 +235,14 @@ export default function App() {
         addLog(selectedSec.id, scoutNames[Math.floor(Math.random() * scoutNames.length)], finalMsg)
       }
 
+      // Background Sync to Firebase
+      if (isOnline && currentUser && isConfigured) {
+        setInventory(currentInv => {
+          syncUserData(currentUser.uid, currentInv).catch(e => console.error("Sync failed", e));
+          return currentInv;
+        });
+      }
+
     }, 10000)
 
     return () => clearInterval(interval)
@@ -216,6 +258,28 @@ export default function App() {
 
   if (!booted) {
     return <BootScreen onComplete={handleBootComplete} />
+  }
+
+  if (currentUser === undefined) {
+    return <div className="crt-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)', fontFamily: 'var(--font-mono)' }}>AUTHENTICATING UPLINK...</div>
+  }
+
+  if (!currentUser) {
+    if (!isOnline) {
+      return (
+        <div className="crt-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div className="cyber-panel primary-glow" style={{ textAlign: 'center', padding: '32px', maxWidth: '400px' }}>
+            <AlertOctagon style={{ width: '48px', height: '48px', color: 'var(--color-danger)', marginBottom: '16px', margin: '0 auto' }} />
+            <h1 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-danger)', fontSize: '20px' }}>OFFLINE MODE</h1>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '16px', lineHeight: '1.5' }}>
+              Network connection required for initial boot sequence and user authentication.
+              <br/><br/>Please restore mesh connection to continue.
+            </p>
+          </div>
+        </div>
+      )
+    }
+    return <SignUp />
   }
 
   return (
@@ -234,17 +298,33 @@ export default function App() {
       <header className="cyber-panel primary-glow" style={{ margin: '16px', padding: '16px', borderBottom: '1px solid var(--color-border)', borderRadius: '4px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           
-          {/* Logo Title */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span className={`led-indicator ${globalStatus === 'secure' ? 'green' : globalStatus === 'alert' ? 'yellow' : 'red'}`} style={{ width: '12px', height: '12px' }}></span>
-              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', letterSpacing: '0.15em', color: 'var(--color-primary)', fontWeight: '900' }}>
-                SECTOR-42 // TSOC
-              </h1>
+          {/* Logo Title & User Info */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span className={`led-indicator ${globalStatus === 'secure' ? 'green' : globalStatus === 'alert' ? 'yellow' : 'red'}`} style={{ width: '12px', height: '12px' }}></span>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', letterSpacing: '0.15em', color: 'var(--color-primary)', fontWeight: '900' }}>
+                  SECTOR-42 // TSOC
+                </h1>
+              </div>
+              <span style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-muted)', display: 'block', marginTop: '2px', letterSpacing: '0.05em' }}>
+                TACTICAL SURVIVAL & OPERATIONS COMMAND TERMINAL
+              </span>
             </div>
-            <span style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-muted)', display: 'block', marginTop: '2px', letterSpacing: '0.05em' }}>
-              TACTICAL SURVIVAL & OPERATIONS COMMAND TERMINAL
-            </span>
+            
+            {currentUser && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', borderLeft: '1px solid var(--color-border)', paddingLeft: '16px', marginTop: '4px' }}>
+                <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--color-primary)', fontWeight: 'bold' }}>
+                  OP: {currentUser.username || currentUser.email}
+                </span>
+                <button 
+                  onClick={() => { logoutUser(); setBooted(false); }}
+                  style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', fontSize: '9px', fontFamily: 'var(--font-mono)', textAlign: 'left', cursor: 'pointer', padding: 0 }}
+                >
+                  [ DISCONNECT ]
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Operational Alert Levels */}
@@ -387,6 +467,8 @@ export default function App() {
                 triggerUINotification={triggerUINotification}
                 exportState={exportState}
                 importState={importState}
+                currentUser={currentUser}
+                isOnline={isOnline}
               />
             )
           })()}
@@ -402,9 +484,9 @@ export default function App() {
             {notifications[0] ? `[${notifications[0].timestamp}] ${notifications[0].text}` : '[NOMINAL STATUS OPERATIONAL: Awaiting telemetry activity]'}
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-text-muted)' }}>
-          <Wifi style={{ width: '12px', height: '12px', color: 'var(--color-primary)' }} />
-          <span>MESH-CONNECTED</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: isOnline ? 'var(--color-text-muted)' : 'var(--color-danger)' }}>
+          {isOnline ? <Wifi style={{ width: '12px', height: '12px', color: 'var(--color-primary)' }} /> : <WifiOff style={{ width: '12px', height: '12px', color: 'var(--color-danger)' }} />}
+          <span>{isOnline ? 'MESH-CONNECTED' : 'OFFLINE MODE'}</span>
         </div>
       </footer>
 
