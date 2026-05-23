@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { 
-  Wifi, 
-  WifiOff, 
-  Volume2, 
+import {
+  Wifi,
+  WifiOff,
+  Volume2,
   VolumeX,
   AlertOctagon,
   BatteryCharging,
@@ -15,6 +15,7 @@ import SignUp from './components/SignUp'
 import { plugins } from './plugins'
 import { subscribeToAuthChanges, syncUserData, isConfigured, seedFactionsIfEmpty, logoutUser, syncFactionData, subscribeToFactionData } from './services/firebase'
 import { playMorseSequence } from './utils/morsePlayer'
+import EventManager from './components/EventManager'
 
 const DEFAULT_SECTORS = [
   { id: 'wt-1', name: 'Watchtower NW', status: 'secure', guards: 1, logs: [{ timestamp: '18:10', operator: 'Sentinel-1', message: 'Perimeter check complete. Visual range clear.' }] },
@@ -30,10 +31,11 @@ const DEFAULT_SECTORS = [
 
 const DEFAULT_INVENTORY = [
   { key: 'food', name: 'Food Rations', quantity: 180, max: 500, unit: 'cans', icon: '🥫' },
-  { key: 'water', name: 'Fresh H2O', quantity: 450, max: 1000, unit: 'liters', icon: '💧' },
+  { key: 'water', name: 'Fresh H2O', quantity: 450, max: 100000, unit: 'liters', icon: '💧' },
   { key: 'medicine', name: 'Trauma Kits', quantity: 18, max: 50, unit: 'kits', icon: '💉' },
   { key: 'ammo', name: '5.56mm Rounds', quantity: 340, max: 1000, unit: 'rds', icon: '⚔️' },
-  { key: 'fuel', name: 'Diesel Fuel', quantity: 95, max: 200, unit: 'L', icon: '🔥' }
+  { key: 'fuel', name: 'Diesel Fuel', quantity: 95, max: 200, unit: 'L', icon: '🔥' },
+  { key: 'scraps', name: 'Salvaged Scraps', quantity: 50, max: 500, unit: 'pcs', icon: '🔩' }
 ]
 
 export default function App() {
@@ -46,10 +48,13 @@ export default function App() {
   const [sectors, setSectors] = useState(DEFAULT_SECTORS)
   const [expeditions, setExpeditions] = useState([])
   const [broadcasts, setBroadcasts] = useState([])
-  
+  const [plannedRaids, setPlannedRaids] = useState([])
+  const [activeEvent, setActiveEvent] = useState(null)
+  const [lastEventTime, setLastEventTime] = useState(0)
+
   const [globalFlashActive, setGlobalFlashActive] = useState(false)
   const lastProcessedBroadcast = useRef(null)
-  
+
   // Terminal Customization states
   const [lowPowerMode, setLowPowerMode] = useState(false)
   const [crtOverlay, setCrtOverlay] = useState(true)
@@ -94,7 +99,7 @@ export default function App() {
   // Faction Data Subscription
   useEffect(() => {
     if (!currentUser || currentUser.factionId === 'free-roamer') return;
-    
+
     const unsubscribe = subscribeToFactionData(currentUser.factionId, (factionData) => {
       if (factionData) {
         if (factionData.inventory) setInventory(factionData.inventory);
@@ -102,6 +107,9 @@ export default function App() {
         if (factionData.population) setPopulation(factionData.population);
         if (factionData.expeditions) setExpeditions(factionData.expeditions);
         if (factionData.broadcasts) setBroadcasts(factionData.broadcasts);
+        if (factionData.plannedRaids !== undefined) setPlannedRaids(factionData.plannedRaids);
+        if (factionData.activeEvent !== undefined) setActiveEvent(factionData.activeEvent);
+        if (factionData.lastEventTime !== undefined) setLastEventTime(factionData.lastEventTime);
       }
     });
     return () => unsubscribe();
@@ -112,11 +120,11 @@ export default function App() {
     if (broadcasts.length > 0) {
       const latest = broadcasts[0]
       const broadcastId = latest.timestamp + latest.operator + latest.message;
-      
+
       // If we haven't processed this exact broadcast
       if (lastProcessedBroadcast.current !== broadcastId) {
         lastProcessedBroadcast.current = broadcastId;
-        
+
         // Don't auto-play our own broadcasts (MorseRadio handles local playback)
         if (currentUser && latest.operator !== currentUser.username) {
           // Extract morse from "[TEXT] .- .- .-"
@@ -141,7 +149,7 @@ export default function App() {
   useEffect(() => {
     const hasBreach = sectors.some(s => s.status === 'breached')
     const hasAlert = sectors.some(s => s.status === 'alert')
-    
+
     if (hasBreach) {
       setGlobalStatus('breached')
     } else if (hasAlert) {
@@ -238,6 +246,20 @@ export default function App() {
     triggerUINotification(`BROADCAST TRANSMITTED: ${message.slice(0, 20)}...`);
   };
 
+  const updateEventsData = (newData) => {
+    if (newData.activeEvent !== undefined) setActiveEvent(newData.activeEvent);
+    if (newData.lastEventTime !== undefined) setLastEventTime(newData.lastEventTime);
+    if (currentUser && currentUser.factionId !== 'free-roamer') syncFactionData(currentUser.factionId, newData);
+  }
+
+  const updatePlannedRaids = (action) => {
+    setPlannedRaids(prev => {
+      const newRaids = typeof action === 'function' ? action(prev) : action;
+      if (currentUser && currentUser.factionId !== 'free-roamer') syncFactionData(currentUser.factionId, { plannedRaids: newRaids });
+      return newRaids;
+    });
+  }
+
   // Global Sync exporter
   const exportState = () => {
     return {
@@ -331,8 +353,8 @@ export default function App() {
           }
         } else {
           setInventory(currentInv => {
-             syncFactionData(currentUser.factionId, { inventory: currentInv, sectors, population, expeditions, broadcasts }).catch(e => console.error("Faction sync failed", e));
-             return currentInv;
+            syncFactionData(currentUser.factionId, { inventory: currentInv, sectors, population, expeditions, broadcasts, plannedRaids, activeEvent, lastEventTime }).catch(e => console.error("Faction sync failed", e));
+            return currentInv;
           });
         }
       }
@@ -367,7 +389,7 @@ export default function App() {
             <h1 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-danger)', fontSize: '20px' }}>OFFLINE MODE</h1>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '16px', lineHeight: '1.5' }}>
               Network connection required for initial boot sequence and user authentication.
-              <br/><br/>Please restore mesh connection to continue.
+              <br /><br />Please restore mesh connection to continue.
             </p>
           </div>
         </div>
@@ -378,7 +400,7 @@ export default function App() {
 
   return (
     <div className={getAppClasses()} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      
+
       {/* CRT OVERLAY LAYER SHIELD */}
       {crtOverlay && !lowPowerMode && (
         <>
@@ -391,7 +413,7 @@ export default function App() {
       {/* HEADER SECTION PANEL */}
       <header className="cyber-panel primary-glow" style={{ margin: '16px', padding: '16px', borderBottom: '1px solid var(--color-border)', borderRadius: '4px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
-          
+
           {/* Logo Title & User Info */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
             <div>
@@ -405,13 +427,13 @@ export default function App() {
                 TACTICAL SURVIVAL & OPERATIONS COMMAND TERMINAL
               </span>
             </div>
-            
+
             {currentUser && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', borderLeft: '1px solid var(--color-border)', paddingLeft: '16px', marginTop: '4px' }}>
                 <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--color-primary)', fontWeight: 'bold' }}>
                   OP: {currentUser.username || currentUser.email}
                 </span>
-                <button 
+                <button
                   onClick={() => { logoutUser(); setBooted(false); }}
                   style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', fontSize: '9px', fontFamily: 'var(--font-mono)', textAlign: 'left', cursor: 'pointer', padding: 0 }}
                 >
@@ -424,10 +446,10 @@ export default function App() {
           {/* Operational Alert Levels */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'var(--bg-black)', border: '1px solid var(--color-border)', padding: '8px 16px', borderRadius: '4px' }}>
             <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-muted)' }}>TACTICAL ALERT:</span>
-            <span style={{ 
-              fontFamily: 'var(--font-display)', 
-              fontWeight: 'bold', 
-              fontSize: '13px', 
+            <span style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 'bold',
+              fontSize: '13px',
               letterSpacing: '0.1em',
               color: globalStatus === 'breached' ? 'var(--color-danger)' : globalStatus === 'alert' ? 'var(--color-warning)' : 'var(--color-success)',
               textShadow: globalStatus === 'breached' ? '0 0 6px var(--color-danger)' : 'none'
@@ -439,7 +461,7 @@ export default function App() {
           {/* Utility Tools */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {/* Battery Power Bandwidth Toggle */}
-            <button 
+            <button
               className={`cyber-btn ${lowPowerMode ? 'active' : ''}`}
               onClick={() => {
                 setLowPowerMode(!lowPowerMode)
@@ -454,7 +476,7 @@ export default function App() {
 
             {/* CRT visual toggle */}
             {!lowPowerMode && (
-              <button 
+              <button
                 className={`cyber-btn ${crtOverlay ? 'active' : ''}`}
                 onClick={() => setCrtOverlay(!crtOverlay)}
                 style={{ padding: '6px 10px' }}
@@ -465,7 +487,7 @@ export default function App() {
             )}
 
             {/* Audio configuration */}
-            <button 
+            <button
               className={`cyber-btn ${soundVolume > 0 ? 'active' : ''}`}
               onClick={() => {
                 const nextVol = soundVolume > 0 ? 0 : 0.5
@@ -482,12 +504,27 @@ export default function App() {
         </div>
       </header>
 
+      <EventManager 
+        activeEvent={activeEvent}
+        lastEventTime={lastEventTime}
+        updateEventsData={updateEventsData}
+        sectors={sectors}
+        updateSector={updateSector}
+        inventory={inventory}
+        adjustInventory={adjustInventory}
+        addLog={addLog}
+        triggerUINotification={triggerUINotification}
+        currentUser={currentUser}
+        plannedRaids={plannedRaids}
+        updatePlannedRaids={updatePlannedRaids}
+      />
+
       {/* BODY CONTENT GRID AREA */}
-      <main style={{ flexGrow: 1, padding: '0 16px 16px 16px', display: 'grid', gridTemplateColumns: '240px 1fr', gap: '20px', alignItems: 'start' }}>
-        
+      <main style={{ flexGrow: 1, padding: '16px', display: 'grid', gridTemplateColumns: '240px 1fr', gap: '20px', alignItems: 'start' }}>
+
         {/* SIDE BAR SECTOR NAV TAB BUTTONS */}
         <section className="cyber-panel primary-glow" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          
+
           <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', borderBottom: '1px solid var(--color-border)', paddingBottom: '6px', marginBottom: '4px', fontFamily: 'var(--font-mono)' }}>
             COMMAND CONSOLE NAVIGATION
           </span>
@@ -495,9 +532,9 @@ export default function App() {
           {plugins.map(plugin => {
             const Icon = plugin.icon;
             return (
-              <button 
+              <button
                 key={plugin.id}
-                className={`cyber-btn ${activeTab === plugin.id ? 'active' : ''}`} 
+                className={`cyber-btn ${activeTab === plugin.id ? 'active' : ''}`}
                 onClick={() => setActiveTab(plugin.id)}
                 style={{ width: '100%', justifyContent: 'flex-start' }}
               >
@@ -538,7 +575,7 @@ export default function App() {
 
         {/* MAIN PANEL CONTENT FEED VIEWPORTS */}
         <section style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
+
           {/* TAB ROUTING DISPLAY VIEWER */}
           {(() => {
             const activePlugin = plugins.find(p => p.id === activeTab);
@@ -547,12 +584,12 @@ export default function App() {
             if (!ActiveComponent) return null;
 
             return (
-              <ActiveComponent 
-                sectors={sectors} 
-                updateSector={updateSector} 
-                addLog={addLog} 
-                lowBandwidth={lowPowerMode} 
-                inventory={inventory} 
+              <ActiveComponent
+                sectors={sectors}
+                updateSector={updateSector}
+                addLog={addLog}
+                lowBandwidth={lowPowerMode}
+                inventory={inventory}
                 adjustInventory={adjustInventory}
                 population={population}
                 setPopulation={handleSetPopulation}
@@ -567,6 +604,11 @@ export default function App() {
                 updateExpeditions={updateExpeditions}
                 broadcasts={broadcasts}
                 addBroadcast={addBroadcast}
+                plannedRaids={plannedRaids}
+                updatePlannedRaids={updatePlannedRaids}
+                activeEvent={activeEvent}
+                lastEventTime={lastEventTime}
+                updateEventsData={updateEventsData}
               />
             )
           })()}
